@@ -1,7 +1,26 @@
 'use strict';
 // 投稿用画像は結果表示時に準備し、共有ボタンのタップ内で直ちに渡す。
 const ResultImage={
-  state:null,ready:null,
+  state:null,ready:null,lastError:null,
+  portraitDataPromise:null,
+  localPortraitData(){
+    if(typeof location==='undefined'||location.protocol!=='file:')return Promise.resolve(null);
+    if(globalThis.RESULT_PORTRAITS)return Promise.resolve(globalThis.RESULT_PORTRAITS);
+    if(this.portraitDataPromise)return this.portraitDataPromise;
+    this.portraitDataPromise=new Promise(resolve=>{
+      const script=document.createElement('script');let timer;
+      const finish=data=>{
+        clearTimeout(timer);script.onload=null;script.onerror=null;
+        if(!data)this.portraitDataPromise=null;
+        resolve(data);
+      };
+      timer=setTimeout(()=>finish(null),10000);
+      script.onload=()=>finish(globalThis.RESULT_PORTRAITS||null);
+      script.onerror=()=>finish(null);script.src='js/result-portraits.js';
+      document.head.append(script);
+    });
+    return this.portraitDataPromise;
+  },
   status(text){document.getElementById('result-image-status').textContent=text;},
   loadImage(src){
     if(typeof Image==='undefined')return Promise.resolve(null);
@@ -21,14 +40,20 @@ const ResultImage={
     document.getElementById('save-result-image').disabled=true;
     document.getElementById('share-result-image').disabled=true;
     this.status('投稿用画像を準備しています…');
+    let stage='準備';this.lastError=null;
     try {
+      stage='描画の初期化';
       const canvas=document.createElement('canvas');
       if(typeof canvas.getContext!=='function')throw Error('canvas unavailable');
       const ctx=canvas.getContext('2d');if(!ctx)throw Error('canvas unavailable');
       const rows=totals.map(p=>({...p,npcId:state.players[p.index].npcId}));
       const count=state.playerCount,round=state.roundNumber,early=state.players.some(p=>p.score<=0);
-      const portraits=await Promise.all(rows.map(p=>p.npcId?this.loadImage(NPC_FACE_IMAGES[p.npcId]):Promise.resolve(null)));
+      const embedded=await this.localPortraitData();
+      const portraits=await Promise.all(rows.map(p=>p.npcId?this.loadImage(embedded?.[p.npcId]||NPC_FACE_IMAGES[p.npcId]):Promise.resolve(null)));
       if(this.state!==state)return;
+      let portraitsOmitted=false;
+      const render=includePortraits=>{
+      // Resetting the dimensions also clears a canvas tainted by local file images.
       canvas.width=1200;canvas.height=390+rows.length*125;
       ctx.fillStyle='#10272b';ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.strokeStyle='#d9bb7c';ctx.lineWidth=3;ctx.strokeRect(22,22,1156,canvas.height-44);
@@ -43,21 +68,36 @@ const ResultImage={
         const y=235+index*125;
         ctx.fillStyle=p.index===0?'#34534c':'#1d3a3e';ctx.fillRect(55,y,1090,108);
         write(`${p.rank}位`,77,y+66,34,p.rank===1?'#f1d495':'#f1e3bf');
-        if(portraits[index])ctx.drawImage(portraits[index],177,y+10,88,88);
+        if(includePortraits&&portraits[index])ctx.drawImage(portraits[index],177,y+10,88,88);
         write(p.name,285,y+64,30,'#f1e3bf','left',490);
         write(`${p.finalScore.toLocaleString('ja-JP')}点`,1118,y+66,39,'#f1d495','right',320);
       });
       write('最終所持点で順位を決定 ／ 同点は同順位',60,canvas.height-94,22,'#a9c7c3');
       write('#宝雀 #宝雀ランキング',60,canvas.height-48,28,'#f1d495');
-      const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error('PNG failed')),'image/png'));
+      };
+      const encode=()=>new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error('PNG failed')),'image/png'));
+      stage='画像の描画';render(true);
+      stage='PNGへの変換';
+      let blob;
+      try {blob=await encode();}
+      catch(error){
+        if(error.name!=='SecurityError')throw error;
+        portraitsOmitted=true;render(false);blob=await encode();
+      }
       if(this.state!==state)return;
-      const file=typeof File==='function'?new File([blob],'pojan-result.png',{type:'image/png'}):null;
-      this.ready={blob,file,text,url:URL.createObjectURL(blob)};
+      // File sharing may be unavailable even when PNG saving works.
+      let file=null;
+      try {if(typeof File==='function')file=new File([blob],'pojan-result.png',{type:'image/png'});}catch(_){}
+      stage='保存用画像の準備';
+      this.ready={blob,file,text,url:URL.createObjectURL(blob),portraitsOmitted};
       document.getElementById('save-result-image').disabled=false;
       document.getElementById('share-result-image').disabled=false;
-      this.status('画像を保存、または共有メニューからXなどへ送れます。');
-    }catch(_){
-      if(this.state===state){this.state=null;this.status('画像を作成できませんでした。総合結果を開き直して再試行してください。');}
+      this.status(portraitsOmitted?'ローカル画像の制限により、キャラクター画像を省いて作成しました。結果画像の保存・共有ができます。':'画像を保存、または共有メニューからXなどへ送れます。');
+    }catch(error){
+      if(this.state===state){
+        this.state=null;this.lastError={stage,name:error.name||'Error',message:error.message||''};
+        this.status(`画像を作成できませんでした（${stage}：${this.lastError.name}）。`);
+      }
     }
   },
   preview(){
