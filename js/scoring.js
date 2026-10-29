@@ -1,5 +1,5 @@
 'use strict';
-// 局の得点移動と4場の勝利点集計
+// 局の得点移動と最終持ち点による順位
 const ScoreManager= {
   settle(players, winner, loser, type, multiplier, dealerIndex=-1) {
     const transfers=[];
@@ -37,12 +37,6 @@ const ScoreManager= {
   }
 };
 const MatchScoreManager= {
-  victoryPoints: {
-    1:4,
-    2:3,
-    3:4,
-    4:1
-  },
   field(round, players) {
     return {
       round,
@@ -50,8 +44,7 @@ const MatchScoreManager= {
         index:p.index,
         name:p.name,
         score:p.score,
-        rank:p.rank,
-        victoryPoints:this.victoryPoints[p.rank]||0
+        rank:p.rank
       }))
     };
   },
@@ -61,13 +54,12 @@ const MatchScoreManager= {
       return {
         index,
         name:p.name,
-        victoryPoints:fields.reduce((n, f)=>n+f.victoryPoints, 0),
-        remainingPoints:fields.reduce((n, f)=>n+f.score, 0),
+        finalScore:fields.length?fields[fields.length-1].score:p.score,
         fields
       };
     });
-    const ahead=(a, b)=>a.victoryPoints>b.victoryPoints||(a.victoryPoints===b.victoryPoints&&a.remainingPoints>b.remainingPoints);
+    const ahead=(a, b)=>a.finalScore>b.finalScore;
     for(const p of totals)p.rank=1+totals.filter(q=>ahead(q, p)).length;
-    return totals.sort((a, b)=>b.victoryPoints-a.victoryPoints||b.remainingPoints-a.remainingPoints);
+    return totals.sort((a, b)=>b.finalScore-a.finalScore);
   }
 };

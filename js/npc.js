@@ -33,10 +33,10 @@ const NPC_PROFILES = {
   },
   kanade: {
     style:'絵札とドラを守る慎重派',
-    description:'絵札とドラを重視しながら、公開された捨て札を手がかりに守備も考えます。',
-    traits:['得意な狙い：トライゴン・フローレス・ドラを含む役','終盤や持ち点が少ない時は、より慎重に打牌します。'],
+    description:'絵札・ドラ・同スートの役を重視し、親への放銃と持ち点が尽きる危険にも気を配ります。',
+    traits:['得意な狙い：トライゴン・フローレス・ブリリアント・ドラを含む役','親の受け払いと残り持ち点を考え、終盤は慎重に打牌します。'],
     weights:{pairs:5,triples:10,adjacent:2,window:2,suit:5,faces:11,dora:13},
-    favorites:{trigon:12,flawless:8}, defense:32
+    favorites:{trigon:12,flawless:8,brilliant:8}, defense:32, paymentAware:true
   }
 };
 const NPC_DEFAULT_PROFILE = {
@@ -64,18 +64,24 @@ const NPCController = {
     };
   },
   // 捨て札からの相対的な危険度。捨てた数字も安全牌とはみなさない。
-  danger(card,state) {
+  danger(card,state,paymentAware=false) {
     const actor=state.currentPlayerIndex,suit=CardManager.suit(card,state);
     let risk=0;
     state.players.forEach((_,index)=>{
       if(index===actor)return;
+      const dealerFactor=actor===state.dealerIndex||index===state.dealerIndex?1.5:1;
+      // A minimum ron estimate, including the discarded dora. This is a risk
+      // heuristic, not knowledge of an opponent's hand or its compound roles.
+      const minimumLoss=2000*dealerFactor*(card.number===state.doraNumber?2:1);
+      const survival=1+Math.max(0,minimumLoss-state.players[actor].score)/minimumLoss;
+      const paymentFactor=paymentAware?dealerFactor*survival:1;
       const pile=state.discardPiles[index];
-      if(!pile.length){risk+=0.5;return;}
+      if(!pile.length){risk+=0.5*paymentFactor;return;}
       const sameNumber=pile.filter(c=>c.number===card.number).length;
       const sameSuit=pile.filter(c=>CardManager.suit(c,state)===suit).length;
       const retention=(sameNumber?0.25:0.6)*0.5+(1-sameSuit/pile.length)*0.3+(card.isFaceCard?0.2:0);
       const readiness=0.25+0.75*Math.min(1,pile.length/state.maxTurns);
-      risk+=retention*readiness;
+      risk+=retention*readiness*paymentFactor;
     });
     return risk;
   },
@@ -100,9 +106,10 @@ const NPCController = {
     const lowScore=actor.score<=CONFIG.initialScoreByPlayerCount[state.playerCount||state.players.length]*0.4?1.6:1;
     const finalChase=state.roundNumber===4&&actor.score<Math.max(...state.players.map(p=>p.score))?0.8:1;
     const late=0.5+Math.min(1,state.turnNumber/state.maxTurns);
-    const defensePenalty=this.danger(hand[index],state)*profile.defense*lowScore*finalChase*late;
-    return {index,outs,multiplierTotal,preference,features,shapeScore,defensePenalty,
-      score:outs*100+multiplierTotal*15+preference+shapeScore-defensePenalty};
+    const defensePenalty=this.danger(hand[index],state,profile.paymentAware)*profile.defense*lowScore*finalChase*late;
+    const dealerBonus=profile.paymentAware&&state.currentPlayerIndex===state.dealerIndex?multiplierTotal*15*0.5:0;
+    return {index,outs,multiplierTotal,preference,features,shapeScore,defensePenalty,dealerBonus,
+      score:outs*100+multiplierTotal*15+preference+shapeScore+dealerBonus-defensePenalty};
   },
   chooseDiscard(hand,state,rng=Math.random,profileId) {
     let best=-Infinity,choices=[];

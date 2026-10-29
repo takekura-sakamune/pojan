@@ -283,3 +283,5 @@
 .record-table-wrap { overflow-x: auto; margin-top: 8px; }
 .record-table-wrap table { min-width: 650px; }
 #record-save-status { font-size: 12px; line-height: 1.7; color: #b6c6c2; }
+.round-label { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
+.round-label .round-suit { display: inline-block; width: 22px; height: 22px; object-fit: contain; flex: 0 0 auto; vertical-align: middle; }

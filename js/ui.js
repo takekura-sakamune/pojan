@@ -3,6 +3,13 @@
 const UIManager= {
   colors:['#f0ca7d', '#80d8cf', '#c4a3ef'],
   lastTap:null,
+  roundLabel(round) {
+    const label=document.createElement('span'),image=document.createElement('img');
+    const suit=CONFIG.suits[(round-1)%CONFIG.suits.length];
+    label.className='round-label';label.textContent=roundName(round);
+    image.className='round-suit';image.src=CARD_IMAGES[suit];image.alt=SUITS[suit][1];image.draggable=false;
+    label.append(image);return label;
+  },
   motionNodes:new Set(),
   clearMotion() {
     for(const node of this.motionNodes)node.remove();
@@ -213,6 +220,7 @@ const UIManager= {
     $('info').replaceChildren(...[`${roundName(s.roundNumber)} / 第${s.handNumber}局 / 第${s.turnNumber}巡`, `親：${s.players[s.dealerIndex].name}`, `ドラ：${s.doraNumber}`, `山札：${s.deck.length}枚`].map(text=> {
       const span=document.createElement('span');span.className='pill';span.textContent=text;return span;
     }));
+    $('info').children[0].replaceChildren(this.roundLabel(s.roundNumber),document.createTextNode(` / 第${s.handNumber}局 / 第${s.turnNumber}巡`));
     for(let index=1;index<=3;index++) {
       const area=this.npcElement('npc-area',index);
       area.hidden=index>=s.playerCount;
@@ -247,6 +255,7 @@ const UIManager= {
     }));
     const continuation=s.gameOver?'対戦が終了しました。「総合結果」で順位を確認できます。':'持ち点を引き継いで次の場へ進みます。';
     $('settlement').textContent=s.result&&s.roundOver?`${roundName(s.roundNumber)}終了：${s.endReason}。${ScoreManager.rank(s.players).map(p=>`${p.rank}位 ${p.name} ${p.score}点`).join(' ／ ')}。${ScoreManager.rank(s.players).filter(p=>p.rank===1).map(p=>p.name).join('・')}が1位。${continuation}`:'';
+    if(s.result&&s.roundOver)$('settlement').replaceChildren(this.roundLabel(s.roundNumber),document.createTextNode($('settlement').textContent.slice(roundName(s.roundNumber).length)));
     $('log').replaceChildren(...s.logs.map(t=> {
       const d=document.createElement('div');
       d.textContent=t;

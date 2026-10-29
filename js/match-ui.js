@@ -89,8 +89,7 @@ const MatchUI= {
     const text=[
       '宝雀（ポージャン） 総合結果',
       `${player.name} ／ ${state.playerCount}人対戦 ／ 総合${player.rank}位`,
-      `勝利点合計：${player.victoryPoints}点`,
-      `所持点合計：${player.remainingPoints}点`,
+      `最終所持点：${player.finalScore}点`,
       '#宝雀 #宝雀ランキング'
     ].join('\n');
     return 'https://x.com/intent/tweet?text='+encodeURIComponent(text);
@@ -104,15 +103,16 @@ const MatchUI= {
   resultTable(fields,totals) {
     const table=document.createElement('table'),
     head=document.createElement('tr');
-    for(const label of ['順位', '名前', ...fields.map(h=>roundName(h.round)+'（所持点／順位／勝利点）'), '所持点合計', '勝利点合計']) {
+    for(const label of ['順位', '名前', ...fields.map(h=>h.round), '最終所持点']) {
       const th=document.createElement('th');
-      th.textContent=label;
+      if(typeof label==='number')th.append(UIManager.roundLabel(label),document.createTextNode('（所持点／順位）'));
+      else th.textContent=label;
       head.append(th);
     }
     table.append(head);
     for(const p of totals) {
       const row=document.createElement('tr');
-      for(const [column,value] of [p.rank+'位', p.name, ...p.fields.map(f=>f.score+'点 ／ '+f.rank+'位 ／ '+f.victoryPoints+'勝利点'), p.remainingPoints+'点', p.victoryPoints+'勝利点'].entries()) {
+      for(const value of [p.rank+'位', p.name, ...p.fields.map(f=>f.score+'点 ／ '+f.rank+'位'), p.finalScore+'点']) {
         const td=document.createElement('td');
         td.textContent=value;
         row.append(td);
@@ -127,7 +127,7 @@ const MatchUI= {
       const details=document.createElement('details'),summary=document.createElement('summary');
       const totals=MatchScoreManager.totals(record.fields,record.players),player=totals.find(p=>p.index===0);
       const date=new Date(record.finishedAt).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'});
-      summary.textContent=`${date} ／ ${record.nickname} ／ ${record.playerCount}人対戦 ／ ${player.rank}位・${player.victoryPoints}勝利点`;
+      summary.textContent=`${date} ／ ${record.nickname} ／ ${record.playerCount}人対戦 ／ ${player.rank}位・最終所持点${player.finalScore}点`;
       const wrapper=document.createElement('div');wrapper.className='record-table-wrap';
       wrapper.append(this.resultTable(record.fields,totals));details.append(summary,wrapper);return details;
     }));

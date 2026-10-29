@@ -49,7 +49,7 @@
           </div>
         </div>
         <p>同じ相手と第四場まで対戦します。人数にかかわらず全員25000点で開始し、持ち点は第四場まで引き継ぎます。誰かが0点以下になると、その時点で対戦終了です。3人・4人対戦はNPCを重複なしでランダムに選びます。</p>
-        <p class="start-rules">勝利点：1位4点／2位3点／3位4点／4位1点。<br>勝利点が同じ場合は、各場の残り所持点の合計で順位を決めます。同点順位には同じ勝利点を付与します。</p>
+        <p class="start-rules">対戦終了時の所持点が多い順に順位を決定します。同じ所持点の場合は同順位です。</p>
         <details id="records-panel">
           <summary>対戦履歴</summary>
           <p id="records-status" role="status"></p>
@@ -143,7 +143,7 @@
     <main id="final-screen" role="dialog" aria-modal="true" aria-labelledby="final-title" hidden>
       <section>
         <h2 id="final-title">総合結果 — 第四場終了</h2>
-        <p>勝利点合計 → 各場の残り所持点合計の順で順位を決定します。</p>
+        <p>最終所持点が多い順に順位を決定します。同じ所持点の場合は同順位です。</p>
         <div id="final-content">
           <div id="final-table-wrap"></div>
           <aside id="final-portraits" aria-label="対戦したNPC"></aside>
@@ -151,7 +151,7 @@
         <p id="final-winner" role="status"></p>
         <p id="record-save-status" role="status"></p>
         <a id="share-x" class="share-x" target="_blank" rel="noopener noreferrer">総合結果をXに投稿</a>
-        <p class="share-note">名前・対戦人数・総合順位・勝利点合計・所持点合計と #宝雀 #宝雀ランキング を入れたXの投稿画面を開きます。内容を確認・編集してから投稿できます。</p>
+        <p class="share-note">名前・対戦人数・総合順位・最終所持点と #宝雀 #宝雀ランキング を入れたXの投稿画面を開きます。内容を確認・編集してから投稿できます。</p>
         <button id="export-final-records" type="button">記録をJSONで保存</button>
         <button id="close-results" type="button">対局画面を見る</button>
         <button id="return-start" type="button">開始画面へ</button>

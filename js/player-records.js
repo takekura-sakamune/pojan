@@ -26,7 +26,7 @@ const PlayerRecords = {
       new Set(field.standings.map(p=>p&&p.index)).size===count &&
       field.standings.every(p=>p && Number.isInteger(p.index) && p.index>=0 && p.index<count &&
         Number.isInteger(p.score) && Number.isInteger(p.rank) && p.rank>=1 && p.rank<=count &&
-        Number.isInteger(p.victoryPoints) && typeof p.name==='string'));
+        typeof p.name==='string'));
   },
   load() {
     try {
@@ -45,7 +45,11 @@ const PlayerRecords = {
           return;
         }
         this.nickname=this.cleanName(data.nickname);
-        this.records=data.records;
+        this.records=data.records.map(record=>{
+          const fields=record.fields.map(field=>({...field,standings:field.standings.map(({victoryPoints,...row})=>row)}));
+          const totals=MatchScoreManager.totals(fields,record.players).map(p=>({index:p.index,name:p.name,rank:p.rank,finalScore:p.finalScore}));
+          return {...record,fields,totals};
+        });
       }
       this.persisted=true;
       this.status='このブラウザ内に保存します。';
@@ -92,7 +96,7 @@ const PlayerRecords = {
       players:state.players.map((p,index)=>({index,name:p.name,npcId:p.npcId||null})),
       fields:JSON.parse(JSON.stringify(state.history)),
       totals:MatchScoreManager.totals(state.history,state.players).map(p=>({
-        index:p.index,name:p.name,rank:p.rank,victoryPoints:p.victoryPoints,remainingPoints:p.remainingPoints
+        index:p.index,name:p.name,rank:p.rank,finalScore:p.finalScore
       }))
     };
     this.records.unshift(record);
