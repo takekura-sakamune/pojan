@@ -296,3 +296,9 @@
 #close-portrait { flex: 0 0 auto; }
 #portrait-large { display: block; width: 100%; height: min(100dvh, 1600px); object-fit: contain; }
 
+
+#result-image-status { font-size: 13px; line-height: 1.7; }
+#result-image-output { display: block; width: min(100%, 600px); height: auto; margin: 12px auto; }
+#result-image-download { color: #f1d495; }
+#result-image-preview { border: 1px solid #496360; padding: 12px; border-radius: 8px; margin: 12px 0; }
+

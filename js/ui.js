@@ -3,6 +3,36 @@
 const UIManager= {
   colors:['#f0ca7d', '#80d8cf', '#c4a3ef'],
   lastTap:null,
+  openPortrait(npcId) {
+    const npc=NPCPool.entries.find(p=>p.id===npcId);
+    if(!npc)return;
+    const dialog=document.getElementById('portrait-dialog');
+    const image=document.getElementById('portrait-large');
+    image.src=NPC_FULL_IMAGES[npcId];image.alt=npc.name;
+    document.getElementById('portrait-title').textContent=npc.name;
+    if(!dialog.open)dialog.showModal();
+  },
+  bindPortraits() {
+    const dialog=document.getElementById('portrait-dialog');
+    document.getElementById('close-portrait').onclick=()=>dialog.close();
+    dialog.onclick=event=>{
+      if(event.target!==dialog)return;
+      const rect=dialog.getBoundingClientRect();
+      if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close();
+    };
+    dialog.oncancel=event=>{event.preventDefault();dialog.close();};
+    const bind=(image,resolve)=>{
+      image.setAttribute('role','button');image.setAttribute('tabindex','0');
+      image.setAttribute('aria-haspopup','dialog');image.setAttribute('aria-controls','portrait-dialog');
+      image.setAttribute('title','クリックして大きな画像を表示');
+      image.onclick=()=>{if(!image.hidden)this.openPortrait(resolve());};
+      image.onkeydown=event=>{
+        if(event.key==='Enter'||event.key===' '){event.preventDefault();image.onclick();}
+      };
+    };
+    bind(document.getElementById('npc-preview-image'),()=>MatchUI.selectedNPC);
+    for(let index=1;index<=3;index++)bind(this.npcElement('npc-face',index),()=>gameState?.players[index]?.npcId);
+  },
   roundLabel(round) {
     const label=document.createElement('span'),image=document.createElement('img');
     const suit=CONFIG.suits[(round-1)%CONFIG.suits.length];

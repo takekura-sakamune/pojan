@@ -9,4 +9,5 @@ if(typeof document!=='undefined') {
   };
   document.getElementById('rules').innerHTML=Object.entries(ROLE_NAMES).map(([id, name], i)=>`<tr><th>${name}</th><td>${ROLE_RULES[i]}${id==='brilliant'?'（フローレス＋カラーレスの別名）':''}</td><td>${ROLE_VALUES[id]*1000}点</td></tr>`).join('');
   MatchUI.bind();
+  UIManager.bindPortraits();
 }

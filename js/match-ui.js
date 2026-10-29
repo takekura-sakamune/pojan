@@ -1,4 +1,95 @@
 'use strict';
+// 投稿用画像は結果表示時に準備し、共有ボタンのタップ内で直ちに渡す。
+const ResultImage={
+  state:null,ready:null,
+  status(text){document.getElementById('result-image-status').textContent=text;},
+  loadImage(src){
+    if(typeof Image==='undefined')return Promise.resolve(null);
+    return new Promise(resolve=>{
+      const image=new Image();let timer;
+      const finish=value=>{clearTimeout(timer);image.onload=null;image.onerror=null;resolve(value);};
+      timer=setTimeout(()=>finish(null),3000);
+      image.onload=()=>finish(image);image.onerror=()=>finish(null);image.src=src;
+    });
+  },
+  async prepare(state,totals,text){
+    if(this.state===state)return;
+    this.state=state;
+    if(this.ready)URL.revokeObjectURL(this.ready.url);
+    this.ready=null;
+    document.getElementById('result-image-preview').hidden=true;
+    document.getElementById('save-result-image').disabled=true;
+    document.getElementById('share-result-image').disabled=true;
+    this.status('投稿用画像を準備しています…');
+    try {
+      const canvas=document.createElement('canvas');
+      if(typeof canvas.getContext!=='function')throw Error('canvas unavailable');
+      const ctx=canvas.getContext('2d');if(!ctx)throw Error('canvas unavailable');
+      const rows=totals.map(p=>({...p,npcId:state.players[p.index].npcId}));
+      const count=state.playerCount,round=state.roundNumber,early=state.players.some(p=>p.score<=0);
+      const portraits=await Promise.all(rows.map(p=>p.npcId?this.loadImage(NPC_FACE_IMAGES[p.npcId]):Promise.resolve(null)));
+      if(this.state!==state)return;
+      canvas.width=1200;canvas.height=390+rows.length*125;
+      ctx.fillStyle='#10272b';ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.strokeStyle='#d9bb7c';ctx.lineWidth=3;ctx.strokeRect(22,22,1156,canvas.height-44);
+      const write=(value,x,y,size,color='#f1e3bf',align='left',maxWidth)=>{
+        ctx.fillStyle=color;ctx.textAlign=align;ctx.font=`bold ${size}px "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif`;
+        ctx.fillText(String(value),x,y,maxWidth||1100);
+      };
+      write('宝雀 — ポージャン',60,96,48,'#f1d495');
+      write('総合結果',60,153,30);
+      write(`${count}人対戦 ／ ${early?`第${round}場・持ち点0点以下で終了`:'第四場終了'}`,60,203,24,'#a9c7c3');
+      rows.forEach((p,index)=>{
+        const y=235+index*125;
+        ctx.fillStyle=p.index===0?'#34534c':'#1d3a3e';ctx.fillRect(55,y,1090,108);
+        write(`${p.rank}位`,77,y+66,34,p.rank===1?'#f1d495':'#f1e3bf');
+        if(portraits[index])ctx.drawImage(portraits[index],177,y+10,88,88);
+        write(p.name,285,y+64,30,'#f1e3bf','left',490);
+        write(`${p.finalScore.toLocaleString('ja-JP')}点`,1118,y+66,39,'#f1d495','right',320);
+      });
+      write('最終所持点で順位を決定 ／ 同点は同順位',60,canvas.height-94,22,'#a9c7c3');
+      write('#宝雀 #宝雀ランキング',60,canvas.height-48,28,'#f1d495');
+      const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(Error('PNG failed')),'image/png'));
+      if(this.state!==state)return;
+      const file=typeof File==='function'?new File([blob],'pojan-result.png',{type:'image/png'}):null;
+      this.ready={blob,file,text,url:URL.createObjectURL(blob)};
+      document.getElementById('save-result-image').disabled=false;
+      document.getElementById('share-result-image').disabled=false;
+      this.status('画像を保存、または共有メニューからXなどへ送れます。');
+    }catch(_){
+      if(this.state===state){this.state=null;this.status('画像を作成できませんでした。総合結果を開き直して再試行してください。');}
+    }
+  },
+  preview(){
+    if(!this.ready)return;
+    document.getElementById('result-image-output').src=this.ready.url;
+    document.getElementById('result-image-download').href=this.ready.url;
+    document.getElementById('result-image-preview').hidden=false;
+  },
+  save(){
+    if(!this.ready)return;
+    this.preview();
+    try {
+      const link=document.createElement('a');link.href=this.ready.url;link.download='pojan-result.png';
+      document.body.append(link);link.click();link.remove();
+      this.status('保存を開始しました。保存されない場合は下の画像を長押ししてください。');
+    }catch(_){this.status('下の画像を長押し、またはダウンロードリンクから保存してください。');}
+  },
+  async share(){
+    if(!this.ready)return;
+    const {file,text}=this.ready;
+    try {
+      if(!file||typeof navigator==='undefined'||!navigator.share||!navigator.canShare||!navigator.canShare({files:[file]})){
+        this.preview();this.status('この環境では画像共有に対応していません。画像を保存してXに添付してください。');return;
+      }
+      await navigator.share({files:[file],text,title:'宝雀 総合結果'});
+      this.status('画像を共有先へ渡しました。投稿内容は共有先で確認してください。');
+    }catch(error){
+      if(error.name==='AbortError'){this.status('共有をキャンセルしました。');return;}
+      this.preview();this.status('画像を共有できませんでした。画像を保存してXに添付してください。');
+    }
+  }
+};
 // 開始画面と最終結果
 const MatchUI= {
   selectedNPC:'random',
@@ -75,6 +166,7 @@ const MatchUI= {
     document.getElementById('final-winner').textContent=winners.length===1?winners[0].name+'の総合優勝！':winners.map(p=>p.name).join('・')+'が同率1位';
     document.getElementById('record-save-status').textContent=s.recordStatus?s.recordStatus.message:'記録情報がありません。';
     document.getElementById('share-x').href=this.shareURL(s,totals);
+    ResultImage.prepare(s,totals,this.shareText(s,totals));
     document.getElementById('final-screen').hidden=false;
     document.getElementById('game-screen').inert=true;
     const close=document.getElementById('close-results');
@@ -85,6 +177,9 @@ const MatchUI= {
     document.getElementById('game-screen').inert=false;
   },
   shareURL(state,totals) {
+    return 'https://x.com/intent/tweet?text='+encodeURIComponent(this.shareText(state,totals));
+  },
+  shareText(state,totals) {
     const player=totals.find(p=>p.index===0);
     const text=[
       '宝雀（ポージャン） 総合結果',
@@ -92,7 +187,7 @@ const MatchUI= {
       `最終所持点：${player.finalScore}点`,
       '#宝雀 #宝雀ランキング'
     ].join('\n');
-    return 'https://x.com/intent/tweet?text='+encodeURIComponent(text);
+    return text;
   },
   registerNickname() {
     const result=PlayerRecords.registerNickname(document.getElementById('player-nickname').value);
@@ -149,6 +244,8 @@ const MatchUI= {
     document.getElementById('nickname-form').onsubmit=event=>{event.preventDefault();this.registerNickname();this.renderRecords();};
     document.getElementById('export-records').onclick=()=>this.downloadRecords();
     document.getElementById('export-final-records').onclick=()=>this.downloadRecords();
+    document.getElementById('save-result-image').onclick=()=>ResultImage.save();
+    document.getElementById('share-result-image').onclick=()=>ResultImage.share();
     document.getElementById('start-game').onclick=()=> {
       SoundManager.unlock();
       this.start();

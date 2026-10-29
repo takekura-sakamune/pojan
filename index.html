@@ -151,12 +151,27 @@
         <p id="final-winner" role="status"></p>
         <p id="record-save-status" role="status"></p>
         <a id="share-x" class="share-x" target="_blank" rel="noopener noreferrer">総合結果をXに投稿</a>
+        <button id="save-result-image" type="button" disabled>画像を保存</button>
+        <button id="share-result-image" type="button" disabled>画像付きで共有</button>
+        <p id="result-image-status" role="status" aria-live="polite"></p>
+        <div id="result-image-preview" hidden>
+          <img id="result-image-output" alt="投稿用の総合結果画像">
+          <p>保存されない場合は画像を長押しして保存してください。</p>
+          <a id="result-image-download" download="pojan-result.png">PNG画像をダウンロード</a>
+        </div>
         <p class="share-note">名前・対戦人数・総合順位・最終所持点と #宝雀 #宝雀ランキング を入れたXの投稿画面を開きます。内容を確認・編集してから投稿できます。</p>
         <button id="export-final-records" type="button">記録をJSONで保存</button>
         <button id="close-results" type="button">対局画面を見る</button>
         <button id="return-start" type="button">開始画面へ</button>
       </section>
     </main>
+    <dialog id="portrait-dialog" aria-labelledby="portrait-title">
+      <div class="portrait-dialog-header">
+        <h2 id="portrait-title"></h2>
+        <button id="close-portrait" type="button" autofocus aria-label="キャラクター画像を閉じる">閉じる ×</button>
+      </div>
+      <img id="portrait-large" alt="" draggable="false">
+    </dialog>
     <script defer src="js/config.js"></script>
     <script defer src="js/assets.js"></script>
     <script defer src="js/sound.js"></script>
