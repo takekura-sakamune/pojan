@@ -285,3 +285,14 @@
 #record-save-status { font-size: 12px; line-height: 1.7; color: #b6c6c2; }
 .round-label { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
 .round-label .round-suit { display: inline-block; width: 22px; height: 22px; object-fit: contain; flex: 0 0 auto; vertical-align: middle; }
+
+/* キャラクターの全身画像を、画面内に収まる大きさで表示する。 */
+#npc-preview-image, #table [id^="npc-face"] { cursor: zoom-in; }
+#npc-preview-image:focus-visible, #table [id^="npc-face"]:focus-visible { outline: 3px solid #f1d495; outline-offset: 3px; }
+#portrait-dialog { width: min(1200px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 24px); padding: 14px; border: 1px solid #d9bb7c; border-radius: 12px; background: #14262b; color: #f1e3bf; box-shadow: 0 16px 60px #0008; overflow: auto; }
+#portrait-dialog::backdrop { background: #071418d9; }
+.portrait-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+#portrait-title { margin: 0; font-size: 18px; }
+#close-portrait { flex: 0 0 auto; }
+#portrait-large { display: block; width: 100%; height: min(100dvh, 1600px); object-fit: contain; }
+
