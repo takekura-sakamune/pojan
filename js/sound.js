@@ -5,29 +5,58 @@ const SoundManager= {
   master:null,
   enabled:true,
   volume:0.75,
+  pending:null,
+  primedContext:null,
   unlock() {
     if(typeof window==='undefined')return;
     try {
       const Audio=window.AudioContext||window.webkitAudioContext;
       if(!Audio)return;
-      if(!this.context) {
+      if(!this.context||this.context.state==='closed') {
         this.context=new Audio();
+        this.primedContext=null;
         this.master=this.context.createGain();
         this.master.gain.value=this.enabled?this.volume:0;
         this.master.connect(this.context.destination);
       }
-      if(this.context.state==='suspended')this.context.resume().catch(()=> {});
+      const ctx=this.context;
+      // iPhone may only allow audio to start at the end of a tap. Start a silent
+      // sample inside that gesture, then recover both suspended and interrupted audio.
+      if(this.primedContext!==ctx&&typeof ctx.createBufferSource==='function') {
+        const source=ctx.createBufferSource();
+        source.buffer=ctx.createBuffer(1,1,ctx.sampleRate);
+        source.connect(this.master);
+        source.onended=()=>source.disconnect();
+        source.start(0);
+        this.primedContext=ctx;
+      }
+      if(ctx.state==='suspended'||ctx.state==='interrupted') {
+        return ctx.resume().then(()=>this.flush(ctx)).catch(()=>{});
+      }
+      this.flush(ctx);
     }
     catch(_) {
       /* Audio must never interrupt a game. */
     }
+  },
+  flush(ctx) {
+    if(ctx!==this.context||ctx.state!=='running')return;
+    const pending=this.pending;
+    this.pending=null;
+    if(pending&&pending.context===ctx&&Date.now()-pending.at<1000)this.play(pending.event);
   },
   update() {
     if(this.master)this.master.gain.setTargetAtTime(this.enabled?this.volume:0, this.context.currentTime, 0.015);
   },
   play(event) {
     const ctx=this.context;
-    if(!this.enabled||!this.volume||!ctx||ctx.state!=='running')return;
+    if(!this.enabled||!this.volume||!ctx)return;
+    if(ctx.state!=='running') {
+      // Retain only the latest sound briefly; never replay a backlog after returning.
+      this.pending={event,at:Date.now(),context:ctx};
+      this.unlock();
+      return;
+    }
     const patterns= {
       draw:[[620, 0, .07, 880, .13]],
       discard:[[240, 0, .065, 110, .22]],
@@ -68,6 +97,12 @@ const SoundManager= {
     });
     document.addEventListener('keydown', ()=>this.unlock(), {
       capture:true
+    });
+    document.addEventListener('touchend', ()=>this.unlock(), {capture:true,passive:true});
+    document.addEventListener('click', ()=>this.unlock(), {capture:true});
+    document.addEventListener('visibilitychange', ()=> {
+      this.pending=null;
+      if(document.visibilityState==='visible'&&this.context)this.unlock();
     });
     toggle.onclick=()=> {
       this.unlock();
