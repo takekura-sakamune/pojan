@@ -97,7 +97,7 @@ const NPCController = {
     const features=this.features(rest,state);
     const shapeScore=Object.entries(profile.weights).reduce((sum,[key,weight])=>sum+features[key]*weight,0);
     // 低い持ち点、終盤では守備を強める。第四場で首位を追う場合は少し攻める。
-    const lowScore=actor.score<=2?1.6:1;
+    const lowScore=actor.score<=CONFIG.initialScoreByPlayerCount[state.playerCount||state.players.length]*0.4?1.6:1;
     const finalChase=state.roundNumber===4&&actor.score<Math.max(...state.players.map(p=>p.score))?0.8:1;
     const late=0.5+Math.min(1,state.turnNumber/state.maxTurns);
     const defensePenalty=this.danger(hand[index],state)*profile.defense*lowScore*finalChase*late;

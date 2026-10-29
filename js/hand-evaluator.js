@@ -33,8 +33,8 @@ const HandEvaluator= {
     }
     add('catseye', cat);
     add('asterism', freq.includes(3)&&freq.includes(2));
-    add('colorless', straight);
-    add('flawless', flush);
+    add('colorless', straight&&!flush);
+    add('flawless', flush&&!straight);
     add('fordite', cards.every(c=>c.number===1||c.number===9||c.isFaceCard));
     add('brilliant', straight&&flush);
     add('fourC', freq.includes(4));
@@ -42,13 +42,15 @@ const HandEvaluator= {
     const paragon=context.isFirstDraw&&context.winType==='tsumo';
     add('paragon', paragon);
     const hasDora=cards.some(c=>c.number===context.doraNumber);
-    let multiplier=hasDora||paragon||roles.includes('brilliant')||roles.includes('fourC')?2:1;
-    if((roles.includes('brilliant')&&hasDora)||(paragon&&hasDora)||(roles.includes('fourC')&&paragon))multiplier=3;
+    const roleUnits=roles.reduce((sum,id)=>sum+ROLE_VALUES[id],0);
+    const multiplier=roleUnits*(hasDora?2:1);
     return {
       isWinning:true,
       roles,
       hasDora,
       multiplier,
+      roleUnits,
+      basePoints:multiplier*1000,
       paragonType:paragon?(context.isDealer?'tenhou':'chihou'):null
     };
   }

@@ -1,10 +1,11 @@
 'use strict';
 // 局の得点移動と4場の勝利点集計
 const ScoreManager= {
-  settle(players, winner, loser, type, multiplier) {
+  settle(players, winner, loser, type, multiplier, dealerIndex=-1) {
     const transfers=[];
+    const payment=from=>1000*multiplier*(type==='ron'?2:1)*((winner===dealerIndex||from===dealerIndex)?1.5:1);
     if(type==='ron') {
-      const amount=2*multiplier;
+      const amount=payment(loser);
       players[loser].score-=amount;
       players[winner].score+=amount;
       transfers.push( {
@@ -15,12 +16,13 @@ const ScoreManager= {
     }
     else players.forEach((p, i)=> {
       if(i!==winner) {
-        p.score-=multiplier;
-        players[winner].score+=multiplier;
+        const amount=payment(i);
+        p.score-=amount;
+        players[winner].score+=amount;
         transfers.push( {
           from:i,
           to:winner,
-          amount:multiplier
+          amount
         });
       }
     });

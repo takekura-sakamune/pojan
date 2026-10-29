@@ -60,6 +60,7 @@ const MatchUI= {
   results() {
     const s=gameState;
     if(!s.gameOver)return;
+    document.getElementById('final-title').textContent=s.players.some(p=>p.score<=0)?`総合結果 — 第${s.roundNumber}場・持ち点0点以下で終了`:'総合結果 — 第四場終了';
     const totals=MatchScoreManager.totals(s.history, s.players);
     const table=this.resultTable(s.history,totals);
     document.getElementById('final-table-wrap').replaceChildren(table);

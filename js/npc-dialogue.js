@@ -1,36 +1,79 @@
+
 'use strict';
 
-// 台詞の内容とイベントを分離。1局終了時に複数の台詞があれば順に残す。
+// NPC台詞管理
+// アガリ・流局は局終了時、最終勝敗は第4場終了時のみ発話する。
 const NPCDialogue = {
   scripts: {
     sylis: {
       start: 'お相手お願いしますね',
-      win: '慈悲は有りませんよ！',
+      tsumoWin: 'ツモ！　これもまた、神の思し召しです。',
+      ronWin: 'ロン！　慈悲は有りませんよ！',
       dealIn: 'くぅ……っ',
-      fieldLoss: 'この私が……っ！',
+      draw: '決着は、次に持ち越しですね',
+      finalWin: '神の御加護に感謝を',
+      finalLoss: 'この私が……っ！',
     },
     taotao: {
       start: 'ふむ、ちと遊んでやろう',
-      win: 'ホホホ……、運が無かったの。',
+      tsumoWin: 'ツモじゃ！　ホホホ……、運が無かったの。',
+      ronWin: 'ロンじゃ！　かかったのう！',
       dealIn: 'むぅ、やるではないか',
-      fieldLoss: 'やれやれ、妾としたことが……',
+      draw: 'むむむ、煮え切らんのう',
+      finalWin: 'ホホホ、妾の勝ちじゃな！',
+      finalLoss: 'やれやれ、妾としたことが……',
     },
     kanade: {
       start: '私めがお相手いたします',
-      win: 'おやおや、勝ってしまいました。',
+      tsumoWin: 'ツモ。おやおや、勝ってしまいました。',
+      ronWin: 'ロン。申し訳ありません、いただきますね。',
       dealIn: '……不覚',
-      fieldLoss: '……丁度アツくなってきた所です',
+      draw: '引き分けですね。お楽しみ頂けましたか？',
+      finalWin: 'お相手ありがとうございました。実に愉しいひとときでした',
+      finalLoss: '完敗ですね。お見事でございました',
     },
   },
 
-  say(state, event, result, index=1) {
-    const script = this.scripts[state.players[index].npcId||state.npcId];
-    if (!script || !script[event]) return;
-    let text = script[event];
-    if (event === 'win') {
-      text += result.roles.map(role => `${ROLE_NAMES[role]}！`).join('');
+  say(state, event, result, index = 1) {
+    const player = state.players[index];
+    if (!player) return;
+
+    const script = this.scripts[player.npcId || state.npcId];
+    if (!script) return;
+
+    // 最終勝敗の台詞は第4場終了時のみ許可
+    if (event === 'finalWin' || event === 'finalLoss') {
+      if (state.roundNumber !== 4 || !state.finalResultReady) {
+        return;
+      }
     }
-    state.players[index].npcLines.push(text);
-    GameManager.log(`${state.players[index].name}：${text}`);
+
+    // 旧イベント名との互換性
+    if (event === 'win') {
+      event = (result?.type || result?.winType) === 'ron' ? 'ronWin' : 'tsumoWin';
+    }
+
+    // 旧fieldLossは途中で発話させない
+    if (event === 'fieldLoss') return;
+
+    let text = script[event];
+    if (!text) return;
+
+    // アガリ時は成立した役名を追加
+    if (
+      (event === 'tsumoWin' || event === 'ronWin') &&
+      Array.isArray(result?.roles)
+    ) {
+      text += result.roles
+        .map(role => `${ROLE_NAMES[role] || role}！`)
+        .join('');
+    }
+
+    if (!Array.isArray(player.npcLines)) {
+      player.npcLines = [];
+    }
+
+    player.npcLines.push(text);
+    GameManager.log(`${player.name}：${text}`);
   },
 };

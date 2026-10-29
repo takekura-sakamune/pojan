@@ -7,6 +7,6 @@ if(typeof document!=='undefined') {
     SoundManager.play('select');
     UIManager.render();
   };
-  document.getElementById('rules').innerHTML=Object.entries(ROLE_NAMES).map(([id, name], i)=>`<tr><th>${name}</th><td>${ROLE_RULES[i]}</td></tr>`).join('');
+  document.getElementById('rules').innerHTML=Object.entries(ROLE_NAMES).map(([id, name], i)=>`<tr><th>${name}</th><td>${ROLE_RULES[i]}${id==='brilliant'?'（フローレス＋カラーレスの別名）':''}</td><td>${ROLE_VALUES[id]*1000}点</td></tr>`).join('');
   MatchUI.bind();
 }

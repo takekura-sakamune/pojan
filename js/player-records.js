@@ -1,6 +1,6 @@
 'use strict';
 
-// 完了した4場分だけを保存。描画ではなく局終了処理から記録する。
+// 第四場完了・持ち点0点以下による対戦終了を保存。
 const PlayerRecords = {
   key: 'pojan.playerRecords.v1',
   nickname: 'あなた',
@@ -18,7 +18,9 @@ const PlayerRecords = {
     const count=record.playerCount;
     if (!Array.isArray(record.players) || record.players.length!==count ||
         !record.players.every((p,i)=>p && p.index===i && typeof p.name==='string')) return false;
-    if (!Array.isArray(record.fields) || record.fields.length!==4) return false;
+    if (!Array.isArray(record.fields) || record.fields.length<1 || record.fields.length>4) return false;
+    if(record.fields.length<4&&(!['negative-score','nonpositive-score'].includes(record.termination)||
+      !record.fields[record.fields.length-1]?.standings?.some(p=>p&&p.score<=0)))return false;
     return record.fields.every((field,index)=>field && field.round===index+1 &&
       Array.isArray(field.standings) && field.standings.length===count &&
       new Set(field.standings.map(p=>p&&p.index)).size===count &&
@@ -77,13 +79,16 @@ const PlayerRecords = {
     return {ok:true,persisted,name,message:persisted?`${name}で登録しました。`:`${name}を使用します。${this.status}`};
   },
   record(state) {
-    if(!state.gameOver || state.history.length!==4)return {ok:false,persisted:false,message:'4場すべてが終了した対戦だけを記録します。'};
+    const bankrupt=state.players.some(p=>p.score<=0);
+    if(!state.gameOver || !state.history.length || state.history.length>4 ||
+      (state.history.length<4&&!bankrupt))return {ok:false,persisted:false,message:'終了した対戦だけを記録します。'};
     if(this.records.some(r=>r.id===state.matchId))return {ok:true,persisted:this.persisted,message:this.status};
     const record={
       id:state.matchId,
       finishedAt:new Date().toISOString(),
       nickname:state.players[0].name,
       playerCount:state.playerCount,
+      termination:bankrupt?'nonpositive-score':'four-fields',
       players:state.players.map((p,index)=>({index,name:p.name,npcId:p.npcId||null})),
       fields:JSON.parse(JSON.stringify(state.history)),
       totals:MatchScoreManager.totals(state.history,state.players).map(p=>({

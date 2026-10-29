@@ -174,14 +174,14 @@ const UIManager= {
     if(!won)return;
     const title=document.createElement('strong');
     title.textContent=(r.type==='tsumo'?'ツモ':'ロン')+'！';
-    panel.append(title, document.createTextNode(`${r.multiplier}倍・ドラ${r.hasDora?'あり':'なし'}`));
+    panel.append(title, document.createTextNode(`基本点${r.basePoints||r.multiplier*1000}点（役の合計${r.roleUnits||r.multiplier}倍・ドラ${r.hasDora?'2倍':'なし'}）`));
     const tabs=document.createElement('div');
     tabs.className='role-tabs';
     tabs.setAttribute('aria-label', '成立役の組み合わせ');
     for(const id of r.roles) {
       const b=document.createElement('button');
       b.textContent=ROLE_NAMES[id];
-      const description=ROLE_RULES[Object.keys(ROLE_NAMES).indexOf(id)];
+      const description=ROLE_RULES[Object.keys(ROLE_NAMES).indexOf(id)]+` ／ ${ROLE_VALUES[id]*1000}点`+(id==='brilliant'?'（フローレス＋カラーレス）':'');
       b.setAttribute('title',description);
       b.setAttribute('aria-description',description);
       b.setAttribute('aria-pressed', String(id===role));
@@ -245,7 +245,8 @@ const UIManager= {
       b.onclick=action;
       return b;
     }));
-    $('settlement').textContent=s.result&&s.roundOver?`${roundName(s.roundNumber)}終了：${s.endReason}。${ScoreManager.rank(s.players).map(p=>`${p.rank}位 ${p.name} ${p.score}点`).join(' ／ ')}。${ScoreManager.rank(s.players).filter(p=>p.rank===1).map(p=>p.name).join('・')}が1位。${s.gameOver?'第四場が終了しました。「総合結果」で順位を確認できます。':'次の場は5点にリセットします。'}`:'';
+    const continuation=s.gameOver?'対戦が終了しました。「総合結果」で順位を確認できます。':'持ち点を引き継いで次の場へ進みます。';
+    $('settlement').textContent=s.result&&s.roundOver?`${roundName(s.roundNumber)}終了：${s.endReason}。${ScoreManager.rank(s.players).map(p=>`${p.rank}位 ${p.name} ${p.score}点`).join(' ／ ')}。${ScoreManager.rank(s.players).filter(p=>p.rank===1).map(p=>p.name).join('・')}が1位。${continuation}`:'';
     $('log').replaceChildren(...s.logs.map(t=> {
       const d=document.createElement('div');
       d.textContent=t;
