@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>宝雀 — ポージャン β</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/table-layout.css">
+  </head>
+  <body>
+    <main id="start-screen">
+      <section class="start-card">
+        <span class="eyebrow">1人で遊ぶ · NPC対戦</span>
+        <div id="start-setup">
+          <div id="start-controls">
+            <h1>宝雀</h1>
+            <p class="muted">ポージャン β — 4つの場を巡る宝石の対局</p>
+            <form id="nickname-form">
+              <label for="player-nickname">ニックネーム</label>
+              <div class="nickname-row">
+                <input id="player-nickname" type="text" maxlength="20" placeholder="あなた" autocomplete="nickname">
+                <button type="submit">登録</button>
+              </div>
+              <p id="nickname-status" role="status" aria-live="polite"></p>
+            </form>
+            <label for="player-count">対戦人数</label>
+            <select id="player-count">
+              <option value="2">2人対戦（NPC 1人）</option>
+              <option value="3">3人対戦（NPC 2人）</option>
+              <option value="4">4人対戦（NPC 3人）</option>
+            </select>
+            <fieldset id="npc-selection">
+              <legend>対戦するNPC</legend>
+              <div id="npc-options" role="group" aria-label="対戦するNPCを選択"></div>
+            </fieldset>
+            <div id="npc-traits" aria-live="polite">
+              <h2 id="npc-style"></h2>
+              <p id="npc-description"></p>
+              <ul id="npc-trait-list"></ul>
+            </div>
+          </div>
+          <div id="npc-preview-column">
+          <figure id="npc-preview">
+            <div id="npc-preview-placeholder" aria-hidden="true">?</div>
+            <img id="npc-preview-image" alt="" draggable="false" hidden>
+            <figcaption id="npc-preview-name" aria-live="polite">ランダム</figcaption>
+          </figure>
+          <button id="start-game" type="button">対戦を始める</button>
+          </div>
+        </div>
+        <p>同じ相手と第四場まで対戦し、各場は全員5点から開始します。3人・4人対戦はNPCを重複なしでランダムに選びます。</p>
+        <p class="start-rules">勝利点：1位4点／2位3点／3位4点／4位1点。<br>勝利点が同じ場合は、各場の残り所持点の合計で順位を決めます。同点順位には同じ勝利点を付与します。</p>
+        <details id="records-panel">
+          <summary>対戦履歴</summary>
+          <p id="records-status" role="status"></p>
+          <div id="saved-records"></div>
+          <button id="export-records" type="button">JSONでバックアップ</button>
+        </details>
+      </section>
+    </main>
+    <main id="game-screen" hidden>
+      <div class="table-scroll">
+      <div id="table" class="table-board players-2" aria-label="対戦卓">
+      <section id="npc-area" class="npc-area">
+        <div id="npc-content">
+        <h2 id="npcTitle"></h2>
+        <div id="npc-dialogue" role="status" aria-live="polite" aria-label="NPCの台詞"></div>
+        <div id="npcHand" class="row"></div>
+        <div id="npcWin" class="win-panel"></div>
+        <div id="npcDiscards" class="row discards" aria-label="NPCの捨て札"></div>
+        </div>
+        <div id="npc-portrait"><img id="npc-face" alt="" draggable="false"></div>
+      </section>
+      <section id="npc-area-2" class="npc-area" hidden>
+        <div id="npc-content-2">
+        <h2 id="npcTitle-2"></h2>
+        <div id="npc-dialogue-2" role="status" aria-live="polite" aria-label="NPCの台詞"></div>
+        <div id="npcHand-2" class="row"></div>
+        <div id="npcWin-2" class="win-panel"></div>
+        <div id="npcDiscards-2" class="row discards" aria-label="NPCの捨て札"></div>
+        </div>
+        <div id="npc-portrait-2"><img id="npc-face-2" alt="" draggable="false"></div>
+      </section>
+      <section id="npc-area-3" class="npc-area" hidden>
+        <div id="npc-content-3">
+        <h2 id="npcTitle-3"></h2>
+        <div id="npc-dialogue-3" role="status" aria-live="polite" aria-label="NPCの台詞"></div>
+        <div id="npcHand-3" class="row"></div>
+        <div id="npcWin-3" class="win-panel"></div>
+        <div id="npcDiscards-3" class="row discards" aria-label="NPCの捨て札"></div>
+        </div>
+        <div id="npc-portrait-3"><img id="npc-face-3" alt="" draggable="false"></div>
+      </section>
+      <div id="center">
+        <div id="info"></div>
+      </div>
+      <section id="player-area">
+        <div id="player-content">
+          <div id="hand-heading">
+            <h2 id="playerTitle"></h2>
+            <label for="hand-sort">自動整列 <select id="hand-sort">
+                <option value="number">数字優先</option>
+                <option value="suit">スート優先</option>
+              </select>
+            </label>
+          </div>
+          <div id="playerHand" class="row"></div>
+          <div id="playerWin" class="win-panel"></div>
+          <div id="playerDiscards" class="row discards" aria-label="あなたの捨て札"></div>
+        </div>
+        <div id="actions" class="row" role="group" aria-label="プレイヤー操作"></div>
+      </section>
+      </div>
+      </div>
+      <div id="player-status">
+        <small id="turn"></small>
+        <p id="message" role="status" aria-live="polite"></p>
+        <div id="settlement" class="settlement"></div>
+      </div>
+      <div id="player-audio">
+        <div id="sound-controls" aria-label="効果音設定">
+          <button id="sound-toggle" type="button" aria-pressed="true">SE：ON</button>
+          <label for="sound-volume">音量</label>
+          <input id="sound-volume" type="range" min="0" max="100" value="75" aria-label="SE音量">
+        </div>
+      </div>
+      <details>
+        <summary>役と遊び方</summary>
+        <p>ツモして5枚から役を作ります。カードを選び「打牌確定」、または同じカードをダブルタップして捨てます。相手の捨て札で完成すればロンできます。人数分の局数、または誰かの持ち点0以下で場が終了。次の場は全員5点から始まります。</p>
+        <p>2人：8巡・2局／3人：5巡・3局／4人：4巡・4局。ツモは他の全員から、ロンは放銃者から得点を受け取ります。複数のロン候補は放銃者から手番順に優先し、見送り時は次の候補へ進みます。</p>
+      <table id="rules"></table>
+        <p>通常役は1倍、ドラを含むアガリ・倍役は2倍。ブリリアント＋ドラ、パラゴン＋ドラ、4C＋パラゴンは3倍。ツモは倍率分、ロンは倍率の2倍の点数を移動します。パラゴンは各自の初回ツモに他の役が成立した場合のみ適用します。</p>
+      </details>
+      <details>
+        <summary>対局履歴</summary>
+        <div id="log"></div>
+      </details>
+      <footer>人数に応じて各場2～4局・最大4～8巡 ／ 絵札のスートは場ごとに変更 ／ 成績はブラウザ内に保存・外部通信なし</footer>
+      <nav id="game-navigation" aria-label="ゲーム画面の操作">
+        <button id="leave-game" type="button">開始画面へ戻る</button>
+      </nav>
+    </main>
+    <main id="final-screen" role="dialog" aria-modal="true" aria-labelledby="final-title" hidden>
+      <section>
+        <h2 id="final-title">総合結果 — 第四場終了</h2>
+        <p>勝利点合計 → 各場の残り所持点合計の順で順位を決定します。</p>
+        <div id="final-content">
+          <div id="final-table-wrap"></div>
+          <aside id="final-portraits" aria-label="対戦したNPC"></aside>
+        </div>
+        <p id="final-winner" role="status"></p>
+        <p id="record-save-status" role="status"></p>
+        <a id="share-x" class="share-x" target="_blank" rel="noopener noreferrer">総合結果をXに投稿</a>
+        <p class="share-note">名前・対戦人数・総合順位・勝利点合計・所持点合計と #宝雀 #宝雀ランキング を入れたXの投稿画面を開きます。内容を確認・編集してから投稿できます。</p>
+        <button id="export-final-records" type="button">記録をJSONで保存</button>
+        <button id="close-results" type="button">対局画面を見る</button>
+        <button id="return-start" type="button">開始画面へ</button>
+      </section>
+    </main>
+    <script defer src="js/config.js"></script>
+    <script defer src="js/assets.js"></script>
+    <script defer src="js/sound.js"></script>
+    <script defer src="js/cards.js"></script>
+    <script defer src="js/hand-evaluator.js"></script>
+    <script defer src="js/scoring.js"></script>
+    <script defer src="js/player-records.js"></script>
+    <script defer src="js/npc.js"></script>
+    <script defer src="js/npc-dialogue.js"></script>
+    <script defer src="js/game.js"></script>
+    <script defer src="js/turns.js"></script>
+    <script defer src="js/role-presenter.js"></script>
+    <script defer src="js/ui.js"></script>
+    <script defer src="js/match-ui.js"></script>
+    <script defer src="js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,285 @@
+/* 卓形式の配置と小型カード。人数別の座席だけを切り替える。 */
+#game-screen {
+  max-width: 1120px;
+  padding: 12px;
+}
+.table-scroll {
+  overflow-x: auto;
+  padding: 5px;
+}
+#table {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(290px, 1.6fr) minmax(180px, 1fr);
+  grid-template-areas:
+    ". north ."
+    "west center east"
+    "south south south";
+  align-items: center;
+  gap: 10px;
+  min-width: 680px;
+}
+#table > section,
+#table > #center {
+  min-width: 0;
+  margin: 0;
+  border-radius: 10px;
+}
+#table #npc-area { grid-area: west; }
+#table #npc-area-2 { grid-area: north; }
+#table #npc-area-3 { grid-area: east; }
+#table #center {
+  grid-area: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 110px;
+  padding: 12px 8px;
+  border: 1px solid #496360;
+  background: radial-gradient(ellipse, #284d49, #1b3436);
+}
+#table #info { gap: 6px; }
+#table .pill { padding: 5px 7px; font-size: 11px; }
+#table #info .pill:first-child { width: 100%; text-align: center; }
+#table #player-area {
+  grid-area: south;
+  justify-self: center;
+  width: min(560px, 100%);
+  grid-template-columns: minmax(0, 1fr) 100px;
+  gap: 12px;
+  padding: 10px 12px;
+}
+#table #hand-heading { gap: 6px; margin-bottom: 8px; }
+#table #hand-heading h2 { font-size: 13px; }
+#table #hand-sort { font-size: 11px; padding: 3px; }
+#table #player-area #actions { padding-left: 9px; gap: 5px; }
+#table #player-area #actions button { min-height: 32px; font-size: 11px; padding: 7px 3px; }
+#table #player-area #actions button:disabled { display: none; }
+
+/* 顔画像を従来の42pxから84pxへ拡大。余白と境界線を含む列幅は90px。 */
+#table .npc-area {
+  grid-template-columns: minmax(0, 1fr) 90px;
+  align-items: start;
+  gap: 7px;
+  padding: 9px;
+}
+#table .npc-area h2 { font-size: 12px; line-height: 1.4; margin-bottom: 6px; }
+#table .npc-area [id^="npc-portrait"] { padding-left: 5px; }
+#table .npc-area [id^="npc-dialogue"] {
+  padding: 5px 6px;
+  margin-bottom: 7px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+#table .npc-area .row { gap: 4px; }
+#table .npc-area.current-npc { border-color: #d9bb7c; box-shadow: 0 0 0 1px #d9bb7c40; }
+
+/* カードの基本寸法。左右席のカードは末尾の規則で中央に向けて倒す。 */
+#table .card {
+  width: 52px;
+  height: 72px;
+  border-radius: 5px;
+  --number-size: 18px;
+  --suit-size: 13px;
+}
+#table .npc-area [id] .card {
+  width: 34px;
+  height: 48px;
+  --number-size: 13px;
+  --suit-size: 10px;
+  font-size: 16px;
+}
+#table .card.role-part { border-width: 2px; }
+#table .card .card-number { top: 2px; left: 2px; font-size: var(--number-size); }
+#table .card .face-suit { top: 2px; right: 2px; width: var(--suit-size); height: var(--suit-size); }
+#table .card .card-art {
+  inset: 27% 5% 14%;
+  width: 90%;
+  height: 59%;
+  object-fit: contain;
+}
+#table .card .card-note,
+#table .card.dora:after { font-size: 7px; bottom: 1px; padding: 0 2px; }
+#table .card .group-note { font-size: 8px; bottom: -14px; }
+#table .winning-hand { padding-bottom: 16px; row-gap: 19px; }
+#table .discards { min-height: 25px; margin-top: 7px; gap: 3px; }
+#table .discards .card,
+#table .npc-area .discards .card {
+  width: 20px;
+  height: 28px;
+  --number-size: 9px;
+  --suit-size: 7px;
+  border-radius: 3px;
+}
+#table .discards .card .card-number { top: 0; left: 0; padding: 0 1px; }
+#table .discards .card .face-suit { top: 0; right: 0; padding: 0; }
+#table .win-panel { font-size: 10px; margin-top: 5px; }
+#table .win-panel strong { font-size: 15px; }
+#table .role-tabs { gap: 3px; margin: 5px 0; }
+#table .role-tabs button { font-size: 10px; padding: 4px 5px; }
+#table .role-legend { font-size: 10px; line-height: 1.6; }
+#table .role-legend span { display: inline-block; margin-right: 6px; }
+
+/* 2人は対面、3人は左右、4人は上下左右。プレイヤーは常に下側。 */
+#table.players-2 {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "north" "center" "south";
+  max-width: 560px;
+  min-width: 0;
+  margin: auto;
+}
+#table.players-2 #npc-area { grid-area: north; }
+#table.players-2 #center { min-height: 65px; }
+#table.players-3 {
+  grid-template-areas: "west center east" "south south south";
+}
+#table.players-3 #npc-area { grid-area: west; }
+#table.players-3 #npc-area-2 { grid-area: east; }
+#player-status { max-width: 560px; margin: 8px auto 0; }
+#player-audio { max-width: 560px; margin: auto; }
+
+@media (max-width: 720px) {
+  #game-screen { padding: 7px; }
+  #table { gap: 7px; }
+  #table #player-area { padding: 9px; }
+  #table .card { width: 46px; height: 64px; --number-size: 17px; --suit-size: 12px; }
+  #table .npc-area [id] .card { width: 32px; height: 45px; --number-size: 12px; --suit-size: 9px; }
+  #table .npc-area .discards .card { width: 20px; height: 28px; --number-size: 9px; --suit-size: 7px; }
+}
+
+/* 行動順は下→左→上→右。左右席のカード上端が中央を向く。 */
+#table .npc-area:is(.seat-west, .seat-east) [id^="npcHand"] {
+  display: grid;
+  grid-template-columns: 48px;
+  grid-auto-rows: 34px;
+  justify-content: center;
+  gap: 5px;
+  padding-top: 3px;
+}
+#table .npc-area:is(.seat-west, .seat-east) .discards {
+  display: grid;
+  grid-template-columns: repeat(3, 28px);
+  grid-auto-rows: 20px;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 5px;
+}
+#table .npc-area:is(.seat-west, .seat-east) [id] .card {
+  align-self: center;
+  justify-self: center;
+  transform-origin: center;
+}
+#table .npc-area.seat-west [id] .card { transform: rotate(90deg); }
+#table .npc-area.seat-east [id] .card { transform: rotate(-90deg); }
+#game-navigation { display: flex; justify-content: center; padding: 14px 0 5px; }
+#leave-game { background: #293e40; color: #f1e3bf; font-size: 12px; }
+@media (max-width: 720px) {
+  #table .npc-area:is(.seat-west, .seat-east) [id^="npcHand"] {
+    grid-template-columns: 45px;
+    grid-auto-rows: 32px;
+  }
+}
+
+/* 名前と全身画像を一緒に見て選ぶ。2人対戦のみ表示する。 */
+#npc-selection { border: 1px solid #496360; border-radius: 8px; margin: 12px 0; padding: 10px; }
+#npc-selection legend { color: #d9bb7c; font-size: 13px; }
+#npc-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+#npc-options button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 96px; background: #23373c; color: #e4e7da; padding: 6px 10px; font-size: 12px; }
+#npc-options button[aria-pressed="true"] { border: 2px solid #e6c67f; background: #3b4c40; }
+#npc-options img { width: 48px; height: 86px; object-fit: contain; }
+#table .npc-area [id^="npc-content"] { grid-column: 1; grid-row: 1; }
+#table .npc-area [id^="npc-portrait"] { grid-column: 2; grid-row: 1; align-self: start; }
+#table .npc-area [id^="npc-face"] { aspect-ratio: 2 / 3; object-fit: contain; }
+/* 総合結果は画面中央。背景の対局操作はinertで無効にする。 */
+#final-screen { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; max-width: none; width: 100%; margin: 0; padding: 16px; background: #071418cc; }
+#final-screen > section { width: min(1080px, 100%); max-height: calc(100dvh - 32px); overflow: auto; margin: 0; padding: 22px; box-shadow: 0 16px 60px #0008; border-color: #b6965f; }
+#final-screen h2, #final-screen > section > p { text-align: center; }
+#final-screen .result-npc { min-width: 115px; }
+#final-screen .result-npc img { width: 40px; height: 64px; object-fit: contain; vertical-align: middle; margin-left: 8px; }
+#final-screen button { margin-top: 8px; }
+@media(max-width:480px) { #npc-options button { gap: 4px; padding: 5px; font-size: 11px; } #npc-options img { width: 36px; } #final-screen { padding: 9px; } #final-screen > section { padding: 14px; max-height: calc(100dvh - 18px); } }
+
+/* full画像は名前に添えるサムネイルではなく、選択枠の右側へ大きく配置。 */
+#npc-options button.npc-choice { position: relative; display: block; min-height: 190px; padding: 16px 12px; text-align: left; overflow: hidden; }
+#npc-options .npc-choice-name { display: block; position: relative; max-width: 43%; font-size: 13px; line-height: 1.7; z-index: 1; overflow-wrap: anywhere; }
+#npc-options .npc-choice img { position: absolute; right: 5px; bottom: 5px; width: 57%; height: 178px; object-fit: contain; }
+#npc-options button.npc-choice-random { text-align: center; }
+#npc-options .npc-choice-random .npc-choice-name { max-width: none; }
+#table .npc-area [id^="npc-face"] { aspect-ratio: 1; object-fit: contain; }
+/* 総合結果でも名前の隣の小画像をやめ、枠内の右側に全身画像をまとめる。 */
+#final-content { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 16px; align-items: start; }
+#final-portraits { border-left: 1px solid #496360; padding-left: 12px; display: grid; gap: 10px; }
+#final-portraits figure { margin: 0; text-align: center; }
+#final-portraits img { width: 100%; height: 240px; object-fit: contain; }
+#final-portraits figcaption { font-size: 12px; color: #d9bb7c; margin-top: 4px; }
+#final-portraits.count-2 img { height: 175px; }
+#final-portraits.count-3 img { height: 135px; }
+@media(max-width:600px) {
+  #npc-options button.npc-choice { min-height: 170px; padding: 12px 8px; }
+  #npc-options .npc-choice-name { font-size: 12px; }
+  #npc-options .npc-choice img { height: 158px; }
+  #final-content { grid-template-columns: minmax(0, 1fr) 100px; gap: 8px; }
+  #final-portraits { padding-left: 6px; }
+  #final-portraits img { height: 190px; }
+}
+
+/* 開始画面：左は人数と縦4段の選択、右は選択中の全身プレビュー。 */
+#start-screen .start-card { max-width: 620px; }
+#start-setup { display: grid; grid-template-columns: 220px minmax(0, 320px); justify-content: space-between; gap: 22px; align-items: start; }
+#start-controls { min-width: 0; text-align: left; }
+#start-controls > label { font-size: 13px; color: #d9bb7c; }
+#start-controls #player-count { margin: 7px 0 12px; padding: 9px; font-size: 13px; }
+#start-controls #npc-selection { margin: 0 0 10px; padding: 8px; }
+#start-setup #npc-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+#start-setup #npc-options button.npc-choice { display: block; position: static; width: 100%; min-height: 38px; padding: 8px 10px; text-align: left; border-width: 2px; }
+#start-setup #npc-options .npc-choice-name { max-width: none; font-size: 12px; line-height: 1.5; }
+#npc-preview-column { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+#npc-preview-column #start-game { width: 100%; margin: 0; padding: 11px 6px; font-size: 13px; }
+#npc-preview { display: grid; grid-template-rows: minmax(0, 1fr) auto; position: relative; min-width: 0; height: 480px; min-height: 525px; margin: 0; padding: 10px; border: 1px solid #496360; border-radius: 10px; background: radial-gradient(ellipse at 50% 70%, #3b514a, #14262b 78%); }
+#npc-preview-image { width: 100%; height: 100%; min-height: 0; object-fit: contain; align-self: center; }
+#npc-preview-placeholder { display: grid; place-items: center; height: 100%; min-height: 0; color: #d9bb7c; font-size: 100px; font-weight: bold; }
+#npc-preview-name { text-align: center; color: #f1d495; font-size: 14px; line-height: 1.7; padding-top: 6px; }
+@media(max-width:600px) {
+  #start-screen .start-card { padding: 16px; }
+  #start-setup { grid-template-columns: 150px minmax(0, 180px); gap: 10px; }
+  #start-controls #player-count { font-size: 12px; padding: 8px 4px; }
+  #start-setup #npc-options button.npc-choice { padding: 7px 6px; min-height: 36px; }
+  #start-setup #npc-options .npc-choice-name { font-size: 11px; }
+  #npc-preview { height: 475px; min-height: 450px; padding: 5px; }
+  #npc-preview-image, #npc-preview-placeholder { height: 100%; min-height: 0; }
+  #npc-preview-name { font-size: 12px; }
+}
+
+/* タイトルとプレビューを同じグリッド行の上端で揃える。 */
+#start-setup { margin-top: 8px; }
+#start-controls h1 { margin: 0 0 6px; }
+#start-controls > .muted { margin: 0 0 18px; }
+#npc-preview-image { object-position: center top; }
+
+/* 画像の実際の高さに合わせて名前を直下へ置く。枠の縦長サイズは維持する。 */
+#npc-preview { grid-template-rows: auto auto; align-content: start; }
+#npc-preview-image { height: auto; max-height: 510px; align-self: start; }
+#npc-preview-name { padding-top: 4px; }
+@media(max-width:600px) {
+  #npc-preview-image { height: auto; max-height: 425px; }
+}
+
+/* 選択中NPCの打ち筋。画像と名前の距離には影響させない。 */
+#npc-traits { border-top: 1px solid #496360; margin: 10px 0; padding-top: 10px; }
+#npc-style { color: #f1d495; font-size: 13px; margin: 0 0 6px; }
+#start-controls #npc-description { font-size: 12px; line-height: 1.7; margin: 0 0 6px; }
+#start-controls #npc-trait-list { display: block; list-style: disc; padding-left: 16px; margin: 0; }
+#start-controls #npc-trait-list li { display: list-item; background: none; padding: 0; font-size: 11px; line-height: 1.7; margin-bottom: 4px; }
+
+/* ニックネームは左の操作欄、保存済み結果は開始画面下部にまとめる。 */
+#nickname-form { margin-bottom: 12px; }
+#nickname-form > label { font-size: 13px; color: #d9bb7c; }
+.nickname-row { display: flex; gap: 5px; margin-top: 6px; }
+#player-nickname { width: 0; min-width: 0; flex: 1; padding: 8px; border: 1px solid #75877b; border-radius: 5px; background: #101d22; color: #f1eee2; font: inherit; font-size: 12px; }
+#nickname-form button { padding: 7px 9px; font-size: 12px; }
+#start-controls #nickname-status { font-size: 10px; line-height: 1.5; margin: 4px 0 0; overflow-wrap: anywhere; }
+#records-panel { border-top: 1px solid #496360; padding-top: 12px; }
+#saved-records details { border: 1px solid #496360; border-radius: 7px; padding: 9px; margin: 9px 0; }
+#saved-records summary { line-height: 1.7; overflow-wrap: anywhere; }
+.record-table-wrap { overflow-x: auto; margin-top: 8px; }
+.record-table-wrap table { min-width: 650px; }
+#record-save-status { font-size: 12px; line-height: 1.7; color: #b6c6c2; }

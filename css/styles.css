@@ -1,0 +1,931 @@
+:root {
+  color-scheme:dark;
+  font-family:'Yu Gothic',Meiryo,sans-serif;
+  background:#101d22;
+  color:#f1eee2
+}
+* {
+  box-sizing:border-box
+}
+body {
+  margin:0
+}
+main {
+  max-width:1080px;
+  margin:auto;
+  padding:28px 22px
+}
+header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between
+}
+h1 {
+  font-size:32px;
+  letter-spacing:.15em;
+  margin:0
+}
+small,.muted {
+  color:#a8b9b8
+}
+header span {
+  color:#dec18a
+}
+#info {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin:22px 0
+}
+.pill {
+  background:#23373c;
+  padding:9px 15px;
+  border-radius:8px
+}
+section {
+  border:1px solid #3b5354;
+  border-radius:16px;
+  padding:20px;
+  margin:14px 0;
+  background:#182d31
+}
+h2 {
+  font-size:16px;
+  margin:0 0 14px
+}
+.row {
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  align-items:center
+}
+.card {
+  width:72px;
+  height:100px;
+  border:1px solid #d4cbb6;
+  background:#fff9e9;
+  color:#273439;
+  border-radius:9px;
+  display:inline-flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  font-size:26px;
+  font-weight:bold;
+  position:relative;
+  padding:0;
+  box-shadow:0 3px 0 #0003
+}
+.card.red {
+  color:#be4c48
+}
+.card em {
+  font-size:25px;
+  font-style:normal
+}
+.card.dora:after {
+  content:'ドラ';
+  font-size:10px;
+  background:#c49c4c;
+  color:#17292d;
+  position:absolute;
+  bottom:3px;
+  border-radius:3px;
+  padding:0 4px
+}
+.card.selected {
+  outline:3px solid #f0ca7d;
+  transform:translateY(-8px)
+}
+button.card {
+  cursor:pointer
+}
+.back {
+  background:repeating-linear-gradient(45deg,#305456,#305456 5px,#264548 5px,#264548 10px);
+  border:3px solid #a1b9af;
+  color:#d8c18a
+}
+.discards {
+  min-height:51px;
+  margin-top:14px
+}
+.discards .card {
+  width:36px;
+  height:49px;
+  font-size:15px;
+  border-radius:4px
+}
+.discards .card em {
+  font-size:13px
+}
+.discards .card:after {
+  display:none
+}
+#center {
+  text-align:center;
+  background:#203e40;
+  padding:22px;
+  border-radius:14px
+}
+#message {
+  font-size:18px;
+  color:#f1d495;
+  margin:6px
+}
+#actions {
+  margin-top:20px;
+  justify-content:center
+}
+button:not(.card) {
+  border:1px solid #75877b;
+  border-radius:8px;
+  padding:12px 18px;
+  background:#d9bb7c;
+  color:#12272c;
+  font:inherit;
+  font-weight:bold;
+  cursor:pointer
+}
+button:disabled {
+  opacity:.3;
+  cursor:default
+}
+#result:empty {
+  display:none
+}
+#result {
+  border-color:#b6965f
+}
+#result p {
+  line-height:1.8
+}
+details {
+  margin-top:24px;
+  color:#b6c6c2
+}
+summary {
+  cursor:pointer
+}
+table {
+  border-collapse:collapse;
+  width:100%;
+  font-size:13px
+}
+td,th {
+  padding:9px;
+  text-align:left;
+  border-bottom:1px solid #3b5354
+}
+#log {
+  line-height:1.8;
+  font-size:13px;
+  max-height:170px;
+  overflow:auto
+}
+footer {
+  font-size:12px;
+  color:#8da5a2;
+  margin-top:20px
+}
+@media(max-width:600px) {
+  main {
+    padding:18px 12px
+  }
+  .card {
+    width:55px;
+    height:80px;
+    font-size:23px
+  }
+  section {
+    padding:15px
+  }
+  .pill {
+    font-size:12px;
+    padding:7px 10px
+  }
+  button:not(.card) {
+    padding:10px;
+    font-size:13px
+  }
+  h1 {
+    font-size:26px
+  }
+}
+/* Compact table: keep the hand and controls close together. */
+main {
+  max-width:880px;
+  padding:14px 16px
+}
+h1 {
+  font-size:26px
+}
+header {
+  gap:12px
+}
+header small {
+  font-size:11px
+}
+.header-tools {
+  display:flex;
+  align-items:center;
+  gap:12px
+}
+.version {
+  font-size:10px
+}
+#info {
+  gap:6px;
+  margin:12px 0
+}
+.pill {
+  padding:6px 10px;
+  font-size:12px;
+  border-radius:6px
+}
+section {
+  padding:12px 14px;
+  margin:9px 0;
+  border-radius:10px
+}
+h2 {
+  font-size:14px;
+  margin-bottom:10px
+}
+.row {
+  gap:7px
+}
+.card {
+  width:58px;
+  height:78px;
+  font-size:23px;
+  border-radius:6px
+}
+.card em {
+  font-size:21px
+}
+.card.dora:after {
+  font-size:9px;
+  bottom:2px
+}
+.card.selected {
+  transform:translateY(-5px)
+}
+:is(#npcHand, [id^="npcHand-"]) .card {
+  width:46px;
+  height:60px;
+  font-size:19px
+}
+:is(#npcHand, [id^="npcHand-"]) .card em {
+  font-size:18px
+}
+.discards {
+  min-height:34px;
+  margin-top:9px;
+  gap:5px
+}
+.discards .card {
+  width:26px;
+  height:35px;
+  font-size:12px
+}
+.discards .card em {
+  font-size:10px
+}
+#center {
+  padding:12px;
+  border-radius:10px
+}
+#message {
+  font-size:14px;
+  min-height:21px;
+  margin:4px 0
+}
+#actions {
+  margin-top:10px;
+  gap:6px
+}
+button:not(.card) {
+  padding:8px 12px;
+  font-size:13px;
+  border-radius:6px
+}
+#result p {
+  font-size:13px;
+  line-height:1.6;
+  margin:10px 0 0
+}
+details {
+  margin-top:12px;
+  font-size:12px
+}
+footer {
+  margin-top:12px;
+  font-size:10px
+}
+td,th {
+  padding:6px
+}
+#sound-controls {
+  display:flex;
+  align-items:center;
+  gap:7px
+}
+#sound-toggle {
+  padding:5px 9px;
+  font-size:12px;
+  background:#293e40;
+  color:#f1d495
+}
+#sound-volume {
+  width:65px;
+  accent-color:#d9bb7c
+}
+#sound-controls label {
+  font-size:11px;
+  color:#a8b9b8
+}
+@media(max-width:600px) {
+  main {
+    padding:10px
+  }
+  header {
+    align-items:flex-start
+  }
+  .header-tools {
+    flex-direction:column;
+    align-items:flex-end;
+    gap:5px
+  }
+  h1 {
+    font-size:24px
+  }
+  section {
+    padding:10px
+  }
+  .card {
+    width:49px;
+    height:69px;
+    font-size:21px
+  }
+  .card em {
+    font-size:19px
+  }
+  .pill {
+    padding:5px 7px;
+    font-size:11px
+  }
+  #actions {
+    gap:5px
+  }
+  button:not(.card) {
+    padding:9px 10px;
+    font-size:12px
+  }
+  #message {
+    font-size:13px
+  }
+  #sound-volume {
+    width:54px
+  }
+}
+#hand-heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px
+}
+#hand-heading h2 {
+  margin:0
+}
+#hand-heading label {
+  font-size:11px;
+  color:#b6c6c2
+}
+#hand-sort {
+  font:inherit;
+  font-size:12px;
+  color:#f1d495;
+  background:#293e40;
+  border:1px solid #75877b;
+  border-radius:5px;
+  padding:4px 6px
+}
+.card.drawn {
+  outline:3px solid #75dce8;
+  outline-offset:2px
+}
+.card.drawn.selected {
+  outline:3px solid #f0ca7d;
+  box-shadow:0 0 0 6px #75dce8
+}
+.card.role-part {
+  border:3px solid var(--group-color);
+  box-shadow:inset 0 0 0 1px #182d31
+}
+.card.role-unused {
+  opacity:.45
+}
+.card .card-note {
+  position:absolute;
+  top:1px;
+  left:2px;
+  font-size:9px;
+  line-height:1.1;
+  color:#153034;
+  background:#b9edf0;
+  padding:1px 2px;
+  border-radius:2px
+}
+.card .group-note {
+  position:absolute;
+  bottom:-17px;
+  font-size:10px;
+  white-space:nowrap;
+  color:var(--group-color)
+}
+.winning-hand {
+  padding-bottom:19px;
+  padding-top:5px
+}
+.win-panel:empty {
+  display:none
+}
+.win-panel {
+  margin-top:8px;
+  font-size:12px
+}
+.win-panel strong {
+  color:#f1d495;
+  font-size:17px;
+  margin-right:8px
+}
+.role-tabs {
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  margin:8px 0
+}
+.role-tabs button {
+  padding:4px 8px;
+  font-size:11px;
+  background:#293e40;
+  color:#d8e5dc
+}
+.role-tabs button[aria-pressed=true] {
+  background:#d9bb7c;
+  color:#12272c
+}
+.role-legend {
+  line-height:1.8;
+  margin:4px 0;
+  color:#c8d9d3
+}
+.role-legend span {
+  margin-right:12px
+}
+.settlement {
+  font-size:12px;
+  line-height:1.7;
+  margin-top:8px
+}
+.settlement:empty {
+  display:none
+}
+#draw-hint {
+  font-size:10px;
+  color:#75dce8;
+  margin-left:8px
+}
+:is(#npcHand, [id^="npcHand-"]).winning-hand .card {
+  width:58px;
+  height:78px;
+  font-size:23px
+}
+:is(#npcHand, [id^="npcHand-"]).winning-hand .card em {
+  font-size:21px
+}
+@media(max-width:600px) {
+  :is(#npcHand, [id^="npcHand-"]).winning-hand .card {
+    width:49px;
+    height:69px;
+    font-size:21px
+  }
+  .card .group-note {
+    font-size:9px
+  }
+}
+/* Embedded illustrations retain their aspect ratio inside every card size. */
+.card.illustrated {
+  isolation:isolate;
+  color:#273439;
+  --ink:#6d561b
+}
+.card.illustrated.red {
+  --ink:#aa2643
+}
+.card.illustrated[title^="サファイア"] {
+  --ink:#2059a2
+}
+.card.illustrated[title^="エメラルド"] {
+  --ink:#18774f
+}
+.card .card-art {
+  position:absolute;
+  inset:22% 7% 8%;
+  width:86%;
+  height:70%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none
+}
+.card.face-card .card-art {
+  inset:2px;
+  width:calc(100% - 4px);
+  height:calc(100% - 4px);
+  border-radius:4px
+}
+.card .card-number {
+  position:absolute;
+  top:2px;
+  left:3px;
+  font-size:19px;
+  line-height:1.05;
+  color:var(--ink);
+  background:#fff9e9ed;
+  border-radius:3px;
+  padding:0 2px;
+  z-index:1;
+  font-variant-numeric:tabular-nums
+}
+.card .face-suit {
+  position:absolute;
+  top:2px;
+  right:2px;
+  width:16px;
+  height:17px;
+  object-fit:contain;
+  background:#fff9e9ed;
+  border-radius:3px;
+  padding:1px;
+  pointer-events:none
+}
+.card .card-note {
+  top:auto;
+  left:auto;
+  bottom:2px;
+  right:2px;
+  font-size:8px;
+  z-index:2
+}
+.card.dora:after {
+  left:2px;
+  right:auto;
+  bottom:2px;
+  font-size:8px;
+  z-index:2
+}
+.discards .card .card-number {
+  font-size:10px;
+  top:1px;
+  left:1px;
+  padding:0 1px
+}
+.discards .card .face-suit {
+  width:9px;
+  height:10px;
+  top:1px;
+  right:1px
+}
+.discards .card .card-art {
+  inset:24% 6% 3%;
+  width:88%;
+  height:73%
+}
+.discards .card.face-card .card-art {
+  inset:1px;
+  width:calc(100% - 2px);
+  height:calc(100% - 2px)
+}
+:is(#npcHand, [id^="npcHand-"]):not(.winning-hand) .card-number {
+  font-size:15px
+}
+@media(max-width:600px) {
+  .card .card-number {
+    font-size:17px
+  }
+  .card .face-suit {
+    width:14px;
+    height:15px
+  }
+}
+/* Double the previous frame dimensions. Keep a dedicated number/suit header. */
+.card {
+  width:116px;
+  height:156px;
+  flex-shrink:0;
+  border-radius:10px;
+  --number-size:30px;
+  --suit-size:24px
+}
+:is(#npcHand, [id^="npcHand-"]) .card {
+  width:92px;
+  height:120px;
+  --number-size:24px;
+  --suit-size:20px
+}
+:is(#npcHand, [id^="npcHand-"]).winning-hand .card {
+  width:116px;
+  height:156px;
+  --number-size:30px;
+  --suit-size:24px
+}
+.discards .card {
+  width:52px;
+  height:70px;
+  --number-size:16px;
+  --suit-size:13px;
+  border-radius:6px
+}
+.discards {
+  min-height:70px
+}
+.card .card-number,:is(#npcHand, [id^="npcHand-"]):not(.winning-hand) .card-number,.discards .card .card-number {
+  top:3px;
+  left:4px;
+  font-size:var(--number-size);
+  line-height:1.05;
+  padding:0 2px
+}
+.card .face-suit,.discards .card .face-suit {
+  top:3px;
+  right:4px;
+  width:var(--suit-size);
+  height:var(--suit-size)
+}
+.card .card-art,.card.face-card .card-art,.discards .card .card-art,.discards .card.face-card .card-art {
+  inset:27% 4% 12%;
+  width:92%;
+  height:61%;
+  object-fit:contain
+}
+.card .card-note {
+  bottom:3px;
+  right:3px;
+  font-size:10px
+}
+.card.dora:after {
+  bottom:3px;
+  left:3px;
+  font-size:10px
+}
+@media(max-width:600px) {
+  .card,:is(#npcHand, [id^="npcHand-"]).winning-hand .card {
+    width:98px;
+    height:138px;
+    --number-size:26px;
+    --suit-size:22px
+  }
+  .discards .card {
+    width:52px;
+    height:70px;
+    --number-size:16px;
+    --suit-size:13px
+  }
+}
+/* Match the table: NPC above, shared information in the middle, player below. */
+#center header {
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px 24px
+}
+#center h1 {
+  font-size:26px
+}
+#center .header-tools {
+  align-items:center
+}
+#center #info {
+  justify-content:center;
+  margin:10px 0 8px
+}
+#center #message {
+  margin-bottom:0
+}
+#player-area {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 130px;
+  gap:16px;
+  align-items:start
+}
+#player-content {
+  min-width:0
+}
+#player-area #actions {
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  margin:0;
+  padding-left:12px;
+  border-left:1px solid #3b5354;
+  gap:7px
+}
+#player-area #actions button {
+  width:100%;
+  min-height:36px;
+  padding:9px 6px
+}
+#hand-heading {
+  flex-wrap:wrap
+}
+#playerHand.winning-hand {
+  row-gap:24px
+}
+@media(max-width:600px) {
+  #center header {
+    align-items:center;
+    gap:8px 14px
+  }
+  #center .header-tools {
+    align-items:center
+  }
+  #player-area {
+    grid-template-columns:minmax(0,1fr) 105px;
+    gap:10px
+  }
+  #player-area #actions {
+    padding-left:8px;
+    gap:6px
+  }
+  #player-area #actions button {
+    font-size:11px;
+    padding:9px 3px
+  }
+  #playerHand {
+    gap:7px
+  }
+}
+[hidden] {
+  display:none!important
+}
+.start-card {
+  max-width:620px;
+  margin:24px auto;
+  padding:26px
+}
+.start-card h1 {
+  font-size:42px;
+  margin:8px 0
+}
+.eyebrow {
+  color:#d9bb7c;
+  font-size:12px;
+  letter-spacing:.1em
+}
+.start-card p {
+  font-size:13px;
+  line-height:1.9
+}
+.start-card select {
+  display:block;
+  width:100%;
+  margin:8px 0 14px;
+  padding:12px;
+  background:#293e40;
+  color:#f1eee2;
+  border:1px solid #75877b;
+  border-radius:6px;
+  font:inherit
+}
+.start-card #start-game {
+  width:100%;
+  margin:8px 0 16px
+}
+.registration-row {
+  display:flex;
+  gap:8px;
+  margin-top:6px
+}
+.registration-row input {
+  min-width:0;
+  flex:1;
+  padding:9px;
+  border:1px solid #75877b;
+  border-radius:6px;
+  background:#101d22;
+  color:#f1eee2;
+  font:inherit
+}
+.start-card ul {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  list-style:none;
+  padding:0
+}
+.start-card li {
+  background:#293e40;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:12px
+}
+.start-rules {
+  color:#a8b9b8
+}
+#npc-feedback {
+  min-height:20px;
+  margin:5px 0;
+  color:#f1d495
+}
+#final-screen h2 {
+  font-size:22px;
+  color:#f1d495
+}
+#final-table-wrap {
+  overflow-x:auto
+}
+#final-table-wrap table {
+  min-width:650px
+}
+#final-table-wrap td {
+  white-space:nowrap
+}
+#final-winner {
+  color:#f1d495;
+  font-size:18px
+}
+#center {
+  padding:8px 12px
+}
+#center #info {
+  margin:0;
+  justify-content:center
+}
+#player-status {
+  padding:0 4px;
+  font-size:12px;
+  color:#a8b9b8
+}
+#player-status #message {
+  font-size:13px;
+  margin:4px 0
+}
+#player-status:has(.settlement:not(:empty)) {
+  margin-bottom:8px
+}
+#player-audio {
+  display:flex;
+  justify-content:flex-end;
+  padding:5px 4px 10px
+}
+#player-audio #sound-controls {
+  flex-wrap:wrap
+}
+.card {
+  touch-action:manipulation
+}
+
+/* NPCの台詞はNPC枠内に表示し、中央の対局情報とは分離する。 */
+:is(#npc-dialogue, [id^="npc-dialogue-"]):empty { display: none; }
+:is(#npc-dialogue, [id^="npc-dialogue-"]) {
+  background: #243f42;
+  border-left: 3px solid #d9bb7c;
+  border-radius: 6px;
+  color: #f1e3bf;
+  padding: 8px 12px;
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+:is(#npc-dialogue, [id^="npc-dialogue-"]) p { margin: 0; }
+:is(#npc-dialogue, [id^="npc-dialogue-"]) p + p { margin-top: 4px; }
+
+/* NPCの手札・台詞の右に顔画像を配置。画像は切り抜かず枠内に収める。 */
+:is(#npc-area, [id^="npc-area-"]) { display: grid; grid-template-columns: minmax(0, 1fr) 180px; gap: 16px; align-items: start; }
+:is(#npc-content, [id^="npc-content-"]) { min-width: 0; }
+:is(#npc-portrait, [id^="npc-portrait-"]) { border-left: 1px solid #3b5354; padding-left: 10px; }
+:is(#npc-face, [id^="npc-face-"]) { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; }
+:is(#npcHand, [id^="npcHand-"]).winning-hand { row-gap: 24px; }
+@media(max-width:600px) {
+  :is(#npc-area, [id^="npc-area-"]) { grid-template-columns: minmax(0, 1fr) 92px; gap: 10px; }
+  :is(#npc-portrait, [id^="npc-portrait-"]) { padding-left: 6px; }
+}
+
+.npc-area.current-npc { border-color: #d9bb7c; }
+.share-x {
+  display:inline-block;
+  padding:10px 16px;
+  margin:6px 0;
+  border:1px solid #d9bb7c;
+  border-radius:8px;
+  background:#243f42;
+  color:#f1e3bf;
+  text-decoration:none;
+  font-weight:bold;
+}
+.share-x:hover { background:#35575a; }
+.share-x:focus-visible { outline:3px solid #f1d495; outline-offset:3px; }
+.share-note { font-size:13px; line-height:1.7; overflow-wrap:anywhere; }

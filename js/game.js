@@ -1,0 +1,127 @@
+'use strict';
+// ゲーム状態、局・場・4場終了の管理
+let gameState;
+const GameManager= {
+  start(round=1, npc=NPCPool.pick(), playerCount=2, nickname='あなた') {
+    if(![2, 3, 4].includes(playerCount))throw new RangeError('対戦人数は2～4人です。');
+    const opponents=[npc, ...DeckManager.shuffle(NPCPool.entries.filter(p=>p.id!==npc.id))].slice(0, playerCount-1);
+    gameState={
+      history:[], gameOver:false, npcId:npc.id, playerCount, matchId:PlayerRecords.newId(),
+      roundNumber:round, handNumber:1, turnNumber:1,
+      currentSuit:CONFIG.suits[(round-1)%4], dealerIndex:0, currentPlayerIndex:0,
+      maxTurns:CONFIG.maxTurnsByPlayerCount[playerCount],
+      players:[{name:PlayerRecords.cleanName(nickname), score:CONFIG.initialScore}, ...opponents.map(p=>({name:p.name, npcId:p.id, score:CONFIG.initialScore}))],
+      logs:[], phase:'waiting', npcTimerToken:0
+    };
+    this.startHand();
+  },
+  startHand() {
+    if(typeof document!=='undefined')UIManager.clearMotion();
+    const s=gameState;
+    s.deck=DeckManager.shuffle(CardManager.create());
+    s.doraNumber=10+Math.floor(Math.random()*4);
+    s.players.forEach(p=> {
+      p.hand=[];
+      p.draws=0;
+      p.lastDrawnId=null;
+    });
+    for(let i=0; i<4; i++)s.players.forEach(p=>p.hand.push(s.deck.pop()));
+    s.discardPiles=s.players.map(()=>[]);
+    s.drawCount=0;
+    s.turnNumber=1;
+    s.currentPlayerIndex=s.dealerIndex;
+    s.selected=null;
+    s.pending=null;
+    s.ronCandidates=[];
+    s.result=null;
+    s.visualEvents=[];
+    s.roundOver=false;
+    s.activeRole=null;
+    s.players.forEach(p=>p.npcLines=[]);
+    s.npcLines=s.players[1].npcLines;
+    if(s.history.length===0&&s.handNumber===1)for(let i=1;i<s.playerCount;i++)NPCDialogue.say(s, 'start', null, i);
+    s.phase='draw';
+    s.message=s.currentPlayerIndex===0?'ツモして手札を5枚にしてください。':s.players[s.currentPlayerIndex].name+'の手番です。';
+    SoundManager.play('start');
+    this.log(`${roundName(s.roundNumber)} 第${s.handNumber}局開始・ドラ${s.doraNumber}`);
+    this.refresh();
+  },
+  log(message) {
+    gameState.logs.unshift(message);
+  },
+  context(i, type) {
+    const s=gameState;
+    return {
+      currentSuit:s.currentSuit,
+      doraNumber:s.doraNumber,
+      isFirstDraw:s.players[i].draws===1,
+      isDealer:s.dealerIndex===i,
+      winType:type
+    };
+  },
+  win(i, type, card) {
+    const s=gameState,
+    cards=[...s.players[i].hand];
+    if(card)cards.push(card);
+    const result=evaluateHand(cards, this.context(i, type));
+    if(!result.isWinning)return;
+    const transfers=ScoreManager.settle(s.players, i, s.currentPlayerIndex, type, result.multiplier);
+    this.finish( {
+      winner:i,
+      type,
+      cards,
+      winningCardId:card?card.id:s.players[i].lastDrawnId,
+      ...result,
+      transfers
+    });
+  },
+  finish(result) {
+    const s=gameState;
+    s.result=result;
+    if(result.type!=='draw')s.visualEvents=(s.visualEvents||[]).concat({type:result.type,player:result.winner});
+    SoundManager.play(result.type==='draw'?'drawEnd':result.type);
+    s.roundOver=s.handNumber>=s.playerCount||s.players.some(p=>p.score<=0);
+    s.endReason=s.players.some(p=>p.score<=0)?'持ち点が0以下になりました':s.roundOver?`規定の${s.playerCount}局が終了しました`:'';
+    if(s.roundOver&&!s.history.some(h=>h.round===s.roundNumber))s.history.push(MatchScoreManager.field(s.roundNumber, s.players));
+    s.gameOver=s.roundOver&&s.roundNumber>=4;
+    s.phase='ended';
+    s.message=result.type==='draw'?'流局 — 得点移動なし':`${s.players[result.winner].name}の${result.type==='tsumo'?'ツモ':'ロン'}！`;
+    this.log(s.message);
+    s.players.forEach(p=>p.npcLines=[]);
+    s.npcLines=s.players[1].npcLines;
+    if(result.type!=='draw') {
+      if(result.winner>0)NPCDialogue.say(s, 'win', result, result.winner);
+      if(result.type==='ron'&&s.currentPlayerIndex>0)NPCDialogue.say(s, 'dealIn', null, s.currentPlayerIndex);
+    }
+    const topScore=Math.max(...s.players.map(p=>p.score));
+    if(s.roundOver)for(let i=1;i<s.playerCount;i++)if(s.players[i].score<topScore)NPCDialogue.say(s, 'fieldLoss', null, i);
+    if(s.gameOver)s.recordStatus=PlayerRecords.record(s);
+    this.refresh();
+  },
+  nextRound() {
+    const s=gameState;
+    if(s.phase!=='ended'||!s.roundOver||s.gameOver)return;
+    s.roundNumber++;
+    s.handNumber=1;
+    s.dealerIndex=0;
+    s.currentSuit=CONFIG.suits[(s.roundNumber-1)%4];
+    s.players.forEach(p=>p.score=CONFIG.initialScore);
+    this.startHand();
+  },
+  nextHand() {
+    if(gameState.phase!=='ended'||gameState.roundOver)return;
+    gameState.handNumber++;
+    gameState.dealerIndex=(gameState.dealerIndex+1)%gameState.playerCount;
+    this.startHand();
+  },
+  refresh() {
+    if(typeof document!=='undefined')UIManager.render();
+    const s=gameState;
+    if(s.phase==='draw'&&s.currentPlayerIndex>0) {
+      const token=++s.npcTimerToken, index=s.currentPlayerIndex;
+      setTimeout(()=> {
+        if(gameState===s&&s.npcTimerToken===token&&s.phase==='draw'&&s.currentPlayerIndex===index)NPCController.act();
+      }, 650);
+    }
+  }
+};
