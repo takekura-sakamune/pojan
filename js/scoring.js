@@ -3,7 +3,7 @@
 const ScoreManager= {
   settle(players, winner, loser, type, multiplier, dealerIndex=-1) {
     const transfers=[];
-    const payment=from=>1000*multiplier*(type==='ron'?2:1)*((winner===dealerIndex||from===dealerIndex)?1.5:1);
+    const payment=from=>1000*multiplier*((winner===dealerIndex||from===dealerIndex)?1.5:1);
     if(type==='ron') {
       const amount=payment(loser);
       players[loser].score-=amount;

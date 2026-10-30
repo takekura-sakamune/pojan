@@ -25,6 +25,7 @@ const GameManager= {
       p.hand=[];
       p.draws=0;
       p.lastDrawnId=null;
+      p.riichi=false;
     });
     for(let i=0; i<4; i++)s.players.forEach(p=>p.hand.push(s.deck.pop()));
     s.discardPiles=s.players.map(()=>[]);
@@ -57,6 +58,7 @@ const GameManager= {
       doraNumber:s.doraNumber,
       isFirstDraw:s.players[i].draws===1,
       isDealer:s.dealerIndex===i,
+      riichi:Boolean(s.players[i].riichi),
       winType:type
     };
   },
@@ -119,8 +121,19 @@ const GameManager= {
     this.startHand();
   },
   refresh() {
+    const s=gameState,autoAction=TurnManager.riichiAutoAction();
+    if(autoAction)s.message=autoAction==='draw'?'リーチ中：自動でツモします。':'リーチ中：自動でツモ切りします。';
+    else if(s.currentPlayerIndex===0&&s.players[0].riichi&&s.phase==='discard')s.message='ツモアガリできます。自動進行を停止しています。';
     if(typeof document!=='undefined')UIManager.render();
-    const s=gameState;
+    if(autoAction){
+      const token=++s.npcTimerToken,phase=s.phase,drawn=s.players[0].lastDrawnId;
+      setTimeout(()=>{
+        if(gameState!==s||s.npcTimerToken!==token||s.phase!==phase||s.currentPlayerIndex!==0||s.players[0].lastDrawnId!==drawn||TurnManager.riichiAutoAction()!==autoAction)return;
+        if(autoAction==='draw')TurnManager.draw();
+        else TurnManager.discard(s.players[0].hand.findIndex(c=>c.id===drawn));
+      },450);
+      return;
+    }
     if(s.phase==='draw'&&s.currentPlayerIndex>0) {
       const token=++s.npcTimerToken, index=s.currentPlayerIndex;
       setTimeout(()=> {

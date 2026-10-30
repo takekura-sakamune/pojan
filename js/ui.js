@@ -101,6 +101,7 @@ const UIManager= {
     if(s.phase!=='discard'||s.currentPlayerIndex!==0)return;
     const index=s.players[0].hand.findIndex(c=>c.id===id);
     if(index<0)return;
+    if(s.players[0].riichi&&s.players[0].hand[index].id!==s.players[0].lastDrawnId)return;
     const now=Date.now(),
     last=this.lastTap,
     keyboard=event&&event.detail===0;
@@ -188,6 +189,7 @@ const UIManager= {
       }
       const i=s.players[idx].hand.indexOf(c),
       el=this.card(c, idx===0&&s.currentPlayerIndex===0&&s.phase==='discard', i);
+      if(idx===0&&s.players[0].riichi&&s.phase==='discard'&&c.id!==s.players[0].lastDrawnId)el.disabled=true;
       const drawn=!won&&s.currentPlayerIndex===idx&&s.phase==='discard'&&c.id===s.players[idx].lastDrawnId;
       if(drawn||(won&&c.id===r.winningCardId)) {
         el.classList.add('drawn');
@@ -211,7 +213,7 @@ const UIManager= {
     if(!won)return;
     const title=document.createElement('strong');
     title.textContent=(r.type==='tsumo'?'ツモ':'ロン')+'！';
-    panel.append(title, document.createTextNode(`基本点${r.basePoints||r.multiplier*1000}点（役の合計${r.roleUnits||r.multiplier}倍・ドラ${r.hasDora?'2倍':'なし'}）`));
+    panel.append(title, document.createTextNode(`基本点${r.basePoints||r.multiplier*1000}点（役${(r.roleUnits||r.multiplier)*1000}点・ドラ${r.hasDora?'+1000点':'なし'}・リーチ${r.hasRiichi?'+1000点':'なし'}）`));
     const tabs=document.createElement('div');
     tabs.className='role-tabs';
     tabs.setAttribute('aria-label', '成立役の組み合わせ');
@@ -258,6 +260,7 @@ const UIManager= {
       const p=s.players[index];
       area.className='npc-area seat-'+this.seatFor(index,s.playerCount)+(s.currentPlayerIndex===index&&s.phase!=='ended'?' current-npc':'');
       this.npcElement('npcTitle',index).textContent=`${p.name}　${p.score}点${index===s.dealerIndex?'（親）':''}`;
+      if(p.riichi)this.npcElement('npcTitle',index).textContent+='【リーチ】';
       this.npcElement('npc-face',index).src=NPC_FACE_IMAGES[p.npcId];
       this.npcElement('npc-face',index).alt=p.name;
       this.npcElement('npc-dialogue',index).replaceChildren(...p.npcLines.map(text=> {
@@ -267,13 +270,26 @@ const UIManager= {
       this.npcElement('npcDiscards',index).replaceChildren(...s.discardPiles[index].map(c=>this.card(c)));
     }
     $('playerTitle').textContent=`${s.players[0].name}　${s.players[0].score}点`;
+    if(s.players[0].riichi)$('playerTitle').textContent+='【リーチ】';
     $('turn').textContent=s.phase==='ended'?'対局結果':`${s.players[s.currentPlayerIndex].name}の手番 · 最大${s.maxTurns}巡`;
     $('message').textContent=s.message;
     this.renderHand(0);
+    const waitLabel=$('riichi-waits');
+    waitLabel.hidden=!s.players[0].riichi;
+    if(s.players[0].riichi){
+      const waits=TurnManager.riichiWaits(0);
+      waitLabel.textContent=waits.length?'待ち牌：'+waits.map(c=>SUITS[CardManager.suit(c,s)][1]+' '+c.number).join(' ／ '):'待ち牌：未公開のアガリ牌は残っていません。';
+    }else waitLabel.textContent='';
     $('playerDiscards').replaceChildren(...s.discardPiles[0].map(c=>this.card(c)));
     const can=s.currentPlayerIndex===0,
     win=can&&s.phase==='discard'&&evaluateHand(s.players[0].hand, GameManager.context(0, 'tsumo')).isWinning;
     const buttons=[['ツモ', can&&s.phase==='draw', ()=>TurnManager.draw()], ['ツモアガリ', win, ()=>TurnManager.tsumo()], ['ロン', s.phase==='ron', ()=>TurnManager.ron()], ['アガリを見送る', s.phase==='ron', ()=>TurnManager.skip()], ['打牌確定', can&&s.phase==='discard'&&s.selected!==null, ()=>TurnManager.discard(s.selected)]];
+    if(can&&s.selected!==null&&TurnManager.canRiichi(s.selected))buttons.push(['リーチ（選択牌を捨てる）',true,()=>TurnManager.declareRiichi(s.selected)]);
+    if(s.players[0].riichi){
+      buttons[0][1]=false;
+      buttons[4][1]=Boolean(win&&s.selected!==null);
+      buttons.push(['ツモを見送る（ツモ切り）',Boolean(win),()=>TurnManager.skipTsumo()]);
+    }
     if(s.phase==='ended'&&!s.gameOver)buttons.push(s.roundOver?['次の場へ', true, ()=>GameManager.nextRound()]:['次局へ', true, ()=>GameManager.nextHand()]);
     if(s.gameOver)buttons.push(['総合結果', true, ()=>MatchUI.results()], ['開始画面へ', true, ()=>MatchUI.showStart()]);
     $('actions').replaceChildren(...buttons.map(([label, enabled, action])=> {

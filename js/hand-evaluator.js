@@ -43,11 +43,13 @@ const HandEvaluator= {
     add('paragon', paragon);
     const hasDora=cards.some(c=>c.number===context.doraNumber);
     const roleUnits=roles.reduce((sum,id)=>sum+ROLE_VALUES[id],0);
-    const multiplier=roleUnits*(hasDora?2:1);
+    const hasRiichi=Boolean(context.riichi);
+    const multiplier=roleUnits+(hasDora?1:0)+(hasRiichi?1:0);
     return {
       isWinning:true,
       roles,
       hasDora,
+      hasRiichi,
       multiplier,
       roleUnits,
       basePoints:multiplier*1000,

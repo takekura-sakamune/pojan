@@ -72,7 +72,7 @@ const NPCController = {
       const dealerFactor=actor===state.dealerIndex||index===state.dealerIndex?1.5:1;
       // A minimum ron estimate, including the discarded dora. This is a risk
       // heuristic, not knowledge of an opponent's hand or its compound roles.
-      const minimumLoss=2000*dealerFactor*(card.number===state.doraNumber?2:1);
+      const minimumLoss=(1000+(card.number===state.doraNumber?1000:0)+(state.players[index].riichi?1000:0))*dealerFactor;
       const survival=1+Math.max(0,minimumLoss-state.players[actor].score)/minimumLoss;
       const paymentFactor=paymentAware?dealerFactor*survival:1;
       const pile=state.discardPiles[index];
@@ -94,7 +94,7 @@ const NPCController = {
     let outs=0,multiplierTotal=0,preference=0;
     for(const draw of possible){
       const result=evaluateHand([...rest,draw],{
-        currentSuit:state.currentSuit,doraNumber:state.doraNumber,winType:'ron',isFirstDraw:false
+        currentSuit:state.currentSuit,doraNumber:state.doraNumber,winType:'ron',isFirstDraw:false,riichi:Boolean(actor.riichi)
       });
       if(!result.isWinning)continue;
       outs++;multiplierTotal+=result.multiplier;
@@ -112,6 +112,8 @@ const NPCController = {
       score:outs*100+multiplierTotal*15+preference+shapeScore+dealerBonus-defensePenalty};
   },
   chooseDiscard(hand,state,rng=Math.random,profileId) {
+    const actor=state.players[state.currentPlayerIndex];
+    if(actor.riichi)return hand.findIndex(c=>c.id===actor.lastDrawnId);
     let best=-Infinity,choices=[];
     hand.forEach((_,index)=>{
       const {score}=this.evaluateDiscard(hand,index,state,profileId);
@@ -127,6 +129,10 @@ const NPCController = {
     if(gameState.phase!=='discard')return;
     const s=gameState;
     if(evaluateHand(s.players[index].hand, GameManager.context(index, 'tsumo')).isWinning)TurnManager.tsumo();
-    else TurnManager.discard(this.chooseDiscard(s.players[index].hand, s));
+    else {
+      const player=s.players[index],discard=this.chooseDiscard(player.hand,s);
+      if(!player.riichi&&this.evaluateDiscard(player.hand,discard,s).outs>0)TurnManager.declareRiichi(discard);
+      else TurnManager.discard(discard);
+    }
   }
 };
