@@ -92,6 +92,7 @@ const PlayerRecords = {
       finishedAt:new Date().toISOString(),
       nickname:state.players[0].name,
       playerCount:state.playerCount,
+      difficulty:state.difficulty||'normal',
       termination:bankrupt?'nonpositive-score':'four-fields',
       players:state.players.map((p,index)=>({index,name:p.name,npcId:p.npcId||null})),
       fields:JSON.parse(JSON.stringify(state.history)),

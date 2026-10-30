@@ -253,6 +253,7 @@ const UIManager= {
       const span=document.createElement('span');span.className='pill';span.textContent=text;return span;
     }));
     $('info').children[0].replaceChildren(this.roundLabel(s.roundNumber),document.createTextNode(` / 第${s.handNumber}局 / 第${s.turnNumber}巡`));
+    const difficulty=document.createElement('span');difficulty.className='pill';difficulty.textContent='CPU：'+(s.difficulty==='easy'?'ノーマル':'本気');$('info').append(difficulty);
     for(let index=1;index<=3;index++) {
       const area=this.npcElement('npc-area',index);
       area.hidden=index>=s.playerCount;

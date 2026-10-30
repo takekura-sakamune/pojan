@@ -63,7 +63,7 @@ const ResultImage={
       };
       write('宝雀 — ポージャン',60,96,48,'#f1d495');
       write('総合結果',60,153,30);
-      write(`${count}人対戦 ／ ${early?`第${round}場・持ち点0点以下で終了`:'第四場終了'}`,60,203,24,'#a9c7c3');
+      write(`${count}人対戦${state.difficulty?'（'+(state.difficulty==='easy'?'ノーマル':'本気')+'）':''} ／ ${early?`第${round}場・持ち点0点以下で終了`:'第四場終了'}`,60,203,24,'#a9c7c3');
       rows.forEach((p,index)=>{
         const y=235+index*125;
         ctx.fillStyle=p.index===0?'#34534c':'#1d3a3e';ctx.fillRect(55,y,1090,108);
@@ -186,12 +186,13 @@ const MatchUI= {
     document.getElementById('game-screen').inert=false;
     document.getElementById('final-screen').hidden=true;
     const selected=count===2?NPCPool.entries.find(p=>p.id===this.selectedNPC):null;
-    GameManager.start(1, selected||NPCPool.pick(), count, registration.name);
+    GameManager.start(1, selected||NPCPool.pick(), count, registration.name,document.getElementById('difficulty').value);
   },
   results() {
     const s=gameState;
     if(!s.gameOver)return;
     document.getElementById('final-title').textContent=s.players.some(p=>p.score<=0)?`総合結果 — 第${s.roundNumber}場・持ち点0点以下で終了`:'総合結果 — 第四場終了';
+    document.getElementById('final-title').textContent+=' ／ '+(s.difficulty==='easy'?'ノーマル':'本気');
     const totals=MatchScoreManager.totals(s.history, s.players);
     const table=this.resultTable(s.history,totals);
     document.getElementById('final-table-wrap').replaceChildren(table);
@@ -223,7 +224,7 @@ const MatchUI= {
     const player=totals.find(p=>p.index===0);
     const text=[
       '宝雀（ポージャン） 総合結果',
-      `${player.name} ／ ${state.playerCount}人対戦 ／ 総合${player.rank}位`,
+      `${player.name} ／ ${state.playerCount}人対戦${state.difficulty?'（'+(state.difficulty==='easy'?'ノーマル':'本気')+'）':''} ／ 総合${player.rank}位`,
       `最終所持点：${player.finalScore}点`,
       '#宝雀 #宝雀ランキング'
     ].join('\n');
@@ -262,7 +263,7 @@ const MatchUI= {
       const details=document.createElement('details'),summary=document.createElement('summary');
       const totals=MatchScoreManager.totals(record.fields,record.players),player=totals.find(p=>p.index===0);
       const date=new Date(record.finishedAt).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'});
-      summary.textContent=`${date} ／ ${record.nickname} ／ ${record.playerCount}人対戦 ／ ${player.rank}位・最終所持点${player.finalScore}点`;
+      summary.textContent=`${date} ／ ${record.nickname} ／ ${record.playerCount}人対戦（${record.difficulty==='easy'?'ノーマル':'本気'}） ／ ${player.rank}位・最終所持点${player.finalScore}点`;
       const wrapper=document.createElement('div');wrapper.className='record-table-wrap';
       wrapper.append(this.resultTable(record.fields,totals));details.append(summary,wrapper);return details;
     }));
@@ -279,6 +280,9 @@ const MatchUI= {
     }
   },
   bind() {
+    const difficulty=document.getElementById('difficulty');
+    if(!['easy','normal'].includes(difficulty.value))difficulty.value='easy';
+    difficulty.onchange=()=>{document.getElementById('difficulty-description').textContent=difficulty.value==='easy'?'ノーマル：打牌のミスが多く、CPUはリーチを宣言しません。':'本気：キャラクターごとの打ち筋で役・点数・守備を考えます。';};
     PlayerRecords.load();
     document.getElementById('player-nickname').value=PlayerRecords.nickname;
     document.getElementById('nickname-form').onsubmit=event=>{event.preventDefault();this.registerNickname();this.renderRecords();};

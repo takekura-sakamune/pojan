@@ -2,12 +2,12 @@
 // ゲーム状態、局・場・4場終了の管理
 let gameState;
 const GameManager= {
-  start(round=1, npc=NPCPool.pick(), playerCount=2, nickname='あなた') {
+  start(round=1, npc=NPCPool.pick(), playerCount=2, nickname='あなた',difficulty='normal') {
     if(![2, 3, 4].includes(playerCount))throw new RangeError('対戦人数は2～4人です。');
     const opponents=[npc, ...DeckManager.shuffle(NPCPool.entries.filter(p=>p.id!==npc.id))].slice(0, playerCount-1);
     const initialScore=CONFIG.initialScoreByPlayerCount[playerCount];
     gameState={
-      history:[], gameOver:false, npcId:npc.id, playerCount, matchId:PlayerRecords.newId(),
+      history:[], gameOver:false, npcId:npc.id, playerCount, difficulty:difficulty==='easy'?'easy':'normal', matchId:PlayerRecords.newId(),
       roundNumber:round, handNumber:1, turnNumber:1,
       currentSuit:CONFIG.suits[(round-1)%4], dealerIndex:0, currentPlayerIndex:0,
       maxTurns:CONFIG.maxTurnsByPlayerCount[playerCount],

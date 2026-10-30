@@ -114,6 +114,9 @@ const NPCController = {
   chooseDiscard(hand,state,rng=Math.random,profileId) {
     const actor=state.players[state.currentPlayerIndex];
     if(actor.riichi)return hand.findIndex(c=>c.id===actor.lastDrawnId);
+    // Easy NPCs make frequent mistakes, but the human's suggested discards and
+    // locked riichi hands must not be affected by this difficulty setting.
+    if(state.currentPlayerIndex>0&&state.difficulty==='easy'&&rng()<0.7)return Math.floor(rng()*hand.length);
     let best=-Infinity,choices=[];
     hand.forEach((_,index)=>{
       const {score}=this.evaluateDiscard(hand,index,state,profileId);
@@ -131,7 +134,7 @@ const NPCController = {
     if(evaluateHand(s.players[index].hand, GameManager.context(index, 'tsumo')).isWinning)TurnManager.tsumo();
     else {
       const player=s.players[index],discard=this.chooseDiscard(player.hand,s);
-      if(!player.riichi&&this.evaluateDiscard(player.hand,discard,s).outs>0)TurnManager.declareRiichi(discard);
+      if(s.difficulty!=='easy'&&!player.riichi&&this.evaluateDiscard(player.hand,discard,s).outs>0)TurnManager.declareRiichi(discard);
       else TurnManager.discard(discard);
     }
   }

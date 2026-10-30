@@ -29,6 +29,12 @@
               <option value="3">3人対戦（NPC 2人）</option>
               <option value="4">4人対戦（NPC 3人）</option>
             </select>
+            <label for="difficulty">CPUの難易度</label>
+            <select id="difficulty" aria-describedby="difficulty-description">
+              <option value="easy" selected>ノーマル</option>
+              <option value="normal">本気</option>
+            </select>
+            <p id="difficulty-description" class="muted">ノーマル：打牌のミスが多く、CPUはリーチを宣言しません。</p>
             <fieldset id="npc-selection">
               <legend>対戦するNPC</legend>
               <div id="npc-options" role="group" aria-label="対戦するNPCを選択"></div>
