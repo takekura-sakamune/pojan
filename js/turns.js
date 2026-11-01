@@ -18,7 +18,7 @@ const TurnManager= {
   },
   canRiichi(index) {
     const s=gameState,p=s.players[s.currentPlayerIndex];
-    return s.phase==='discard'&&!p.riichi&&this.riichiWaits(s.currentPlayerIndex,index).length>0;
+    return s.phase==='discard'&&!s.gsFlow&&!s.gsCharge&&!p.riichi&&this.riichiWaits(s.currentPlayerIndex,index).length>0;
   },
   riichiAutoAction() {
     const s=gameState;
@@ -44,6 +44,7 @@ const TurnManager= {
   draw() {
     const s=gameState;
     if(s.phase!=='draw')return;
+    GemSkillEngine.commit();
     const p=s.players[s.currentPlayerIndex];
     if(!s.deck.length) {
       GameManager.finish( {
@@ -53,6 +54,8 @@ const TurnManager= {
     }
     p.hand.push(s.deck.pop());
     p.lastDrawnId=p.hand[p.hand.length-1].id;
+    p.lastDrawnCard={...p.hand[p.hand.length-1]};
+    if(s.currentPlayerIndex===0&&s.gsCharge){s.gsFlow={resume:"turn"};s.gsCharge=false;}
     s.visualEvents=[{type:'draw',player:s.currentPlayerIndex,cardId:p.lastDrawnId}];
     SoundManager.play('draw');
     p.draws++;
@@ -68,7 +71,9 @@ const TurnManager= {
     p=s.players[s.currentPlayerIndex];
     if(s.phase!=='discard'||!Number.isInteger(index)||index<0||index>=p.hand.length)return;
     if(p.riichi&&!declaration&&p.hand[index].id!==p.lastDrawnId)return;
+    if(s.gsFlow)GemSkillEngine.captureMotion();
     const card=p.hand.splice(index, 1)[0];
+    if(card.gsOriginal){Object.assign(card,card.gsOriginal);delete card.gsOriginal;}
     p.lastDrawnId=null;
     SoundManager.play('discard');
     s.discardPiles[s.currentPlayerIndex].push(card);
@@ -96,6 +101,7 @@ const TurnManager= {
     const s=gameState;
     s.pending=null;
     s.ronCandidates=[];
+    if(GemSkillEngine.continueDiscard())return;
     if(s.drawCount>=s.maxTurns*s.playerCount) {
       GameManager.finish( {
         type:'draw'

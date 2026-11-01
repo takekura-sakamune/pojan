@@ -40,14 +40,77 @@ const UIManager= {
     image.className='round-suit';image.src=CARD_IMAGES[suit];image.alt=SUITS[suit][1];image.draggable=false;
     label.append(image);return label;
   },
+  gsMotion:null,
+  gsLocations() {
+    const s=gameState,map=new Map();
+    const add=(cards,zone)=>cards.forEach((card,index)=>map.set(card.id,{card:{...card},zone,index}));
+    add(s.deck,'deck');s.players.forEach((p,i)=>add(p.hand,'hand:'+i));
+    s.discardPiles.forEach((pile,i)=>add(pile,'discard:'+i));
+    if(s.gsKeep)add([s.gsKeep],'keep');return map;
+  },
+  gsCardNodes() {
+    const map=new Map();
+    const visit=node=>{
+      if(!node)return;
+      const id=typeof node.getAttribute==='function'?node.getAttribute('data-card-id'):null;
+      if(id&&!map.has(id))map.set(id,node);
+      for(const child of Array.from(node.children||[]))visit(child);
+    };
+    visit(document.getElementById('playerHand'));
+    for(let i=1;i<gameState.playerCount;i++)visit(this.npcElement('npcHand',i));
+    visit(document.getElementById('playerDiscards'));
+    for(let i=1;i<gameState.playerCount;i++)visit(this.npcElement('npcDiscards',i));
+    visit(document.getElementById('gs-game'));return map;
+  },
+  captureGSMotion() {
+    if(typeof window==='undefined')return;
+    const nodes=this.gsCardNodes(),origins=new Map();
+    for(const [id,node] of nodes)if(typeof node.getBoundingClientRect==='function'){
+      const rect=node.getBoundingClientRect();if(rect.width&&rect.height)origins.set(id,{rect,node});
+    }
+    this.gsMotion={state:gameState,locations:this.gsLocations(),origins};
+  },
+  playGSMotion(events) {
+    const snapshot=this.gsMotion;this.gsMotion=null;
+    if(!snapshot||snapshot.state!==gameState||typeof window==='undefined'||
+      (window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches))return;
+    const nodes=this.gsCardNodes(),locations=this.gsLocations();
+    const center=document.getElementById('center');if(typeof center.getBoundingClientRect!=='function')return;
+    const deckRect=center.getBoundingClientRect();
+    for(const [id,after] of locations){
+      const before=snapshot.locations.get(id);if(!before||(before.zone===after.zone&&(after.zone!=='deck'||before.index===after.index)))continue;
+      // 通常打牌と同じイベントがある時は既存の演出に任せる。
+      if(events.some(e=>e.cardId===id))continue;
+      const origin=snapshot.origins.get(id),target=nodes.get(id);
+      const source=origin?.rect||deckRect;
+      const destination=after.zone==='deck'?deckRect:target?.getBoundingClientRect?.();
+      if(!destination||(!origin&&!target)||!source.width||!destination.width)continue;
+      const template=after.zone==='deck'?origin?.node:target;
+      if(!template||typeof template.animate!=='function')continue;
+      const ghost=template.cloneNode(true);
+      const appearance=window.getComputedStyle(template);
+      for(const property of appearance)ghost.style.setProperty(property,appearance.getPropertyValue(property));
+      const width=target?.offsetWidth||origin?.node.offsetWidth||52,height=target?.offsetHeight||origin?.node.offsetHeight||72;
+      const fromX=source.left+(source.width-width)/2,fromY=source.top+(source.height-height)/2;
+      const toX=destination.left+(destination.width-width)/2,toY=destination.top+(destination.height-height)/2;
+      ghost.className+=' motion-card';ghost.setAttribute('aria-hidden','true');ghost.setAttribute('tabindex','-1');
+      Object.assign(ghost.style,{position:'fixed',left:fromX+'px',top:fromY+'px',width:width+'px',height:height+'px',margin:'0',pointerEvents:'none',zIndex:'1000',transform:'none'});
+      document.body.append(ghost);this.motionNodes.add(ghost);
+      const animation=ghost.animate([{transform:'translate(0, 0)',opacity:1},{transform:`translate(${toX-fromX}px, ${toY-fromY}px)`,opacity:after.zone==='deck'?0:1}],{duration:360,easing:'cubic-bezier(.2,.8,.2,1)'});
+      if(target&&after.zone!=='deck')target.animate([{opacity:0},{opacity:0}],{duration:360});
+      const cleanup=()=>{ghost.remove();this.motionNodes.delete(ghost);};animation.onfinish=cleanup;animation.oncancel=cleanup;
+    }
+  },
   motionNodes:new Set(),
   clearMotion() {
+    this.gsMotion=null;
     for(const node of this.motionNodes)node.remove();
     this.motionNodes.clear();
   },
   playMotion() {
     const s=gameState,events=s.visualEvents||[];
     s.visualEvents=[];
+    this.playGSMotion(events);
     if(typeof window==='undefined'||(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches))return;
     for(const event of events) {
       const npc=event.player>0;
@@ -283,7 +346,7 @@ const UIManager= {
     }else waitLabel.textContent='';
     $('playerDiscards').replaceChildren(...s.discardPiles[0].map(c=>this.card(c)));
     const can=s.currentPlayerIndex===0,
-    win=can&&s.phase==='discard'&&evaluateHand(s.players[0].hand, GameManager.context(0, 'tsumo')).isWinning;
+    win=can&&s.phase==='discard'&&(s.players[0].hand.length>5?Boolean(GemSkillEngine.best()):evaluateHand(s.players[0].hand, GameManager.context(0, 'tsumo')).isWinning);
     const buttons=[['ツモ', can&&s.phase==='draw', ()=>TurnManager.draw()], ['ツモアガリ', win, ()=>TurnManager.tsumo()], ['ロン', s.phase==='ron', ()=>TurnManager.ron()], ['アガリを見送る', s.phase==='ron', ()=>TurnManager.skip()], ['打牌確定', can&&s.phase==='discard'&&s.selected!==null, ()=>TurnManager.discard(s.selected)]];
     if(can&&s.selected!==null&&TurnManager.canRiichi(s.selected))buttons.push(['リーチ（選択牌を捨てる）',true,()=>TurnManager.declareRiichi(s.selected)]);
     if(s.players[0].riichi){
@@ -308,6 +371,7 @@ const UIManager= {
       d.textContent=t;
       return d;
     }));
+    GemSkillEngine.render();
     this.playMotion();
   }
 };

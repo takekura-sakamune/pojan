@@ -13,7 +13,8 @@
   grid-template-areas:
     ". north ."
     "west center east"
-    "south south south";
+    "south south south"
+    "skills skills skills";
   align-items: center;
   gap: 10px;
   min-width: 680px;
@@ -122,7 +123,7 @@
 /* 2人は対面、3人は左右、4人は上下左右。プレイヤーは常に下側。 */
 #table.players-2 {
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "north" "center" "south";
+  grid-template-areas: "north" "center" "south" "skills";
   max-width: 560px;
   min-width: 0;
   margin: auto;
@@ -130,7 +131,8 @@
 #table.players-2 #npc-area { grid-area: north; }
 #table.players-2 #center { min-height: 65px; }
 #table.players-3 {
-  grid-template-areas: "west center east" "south south south";
+  grid-template-areas: "west center east" "south south south"
+    "skills skills skills";
 }
 #table.players-3 #npc-area { grid-area: west; }
 #table.players-3 #npc-area-2 { grid-area: east; }
@@ -303,3 +305,15 @@
 #result-image-preview { border: 1px solid #496360; padding: 12px; border-radius: 8px; margin: 12px 0; }
 
 #riichi-waits { color: #f1d495; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; margin: 8px 0; }
+
+#start-controls #difficulty { display: block; width: 100%; margin: 7px 0; padding: 9px; font-size: 13px; }
+#start-controls #difficulty-description { font-size: 11px; line-height: 1.7; margin: 4px 0 12px; }
+
+
+/* プレイヤーとGSは同じ卓の列・幅に揃える。 */
+#table #gs-game { grid-area: skills; justify-self: center; width: min(560px, 100%); padding: 12px; margin: 0; }
+.gs-options { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-block: 12px; }
+#gs-game .gs-options .card { width: 52px; height: 72px; padding: 0; margin: 0; cursor: pointer; }
+#gs-game .gs-options .card:hover { outline: 2px solid #dec18a; }
+#gs-game .gs-options .card:focus-visible { outline: 3px solid #80d8cf; }
+#gs-game .gs-cancel { display: block; margin-block: 10px; }

@@ -7,7 +7,7 @@ const GameManager= {
     const opponents=[npc, ...DeckManager.shuffle(NPCPool.entries.filter(p=>p.id!==npc.id))].slice(0, playerCount-1);
     const initialScore=CONFIG.initialScoreByPlayerCount[playerCount];
     gameState={
-      history:[], gameOver:false, npcId:npc.id, playerCount, difficulty:difficulty==='easy'?'easy':'normal', matchId:PlayerRecords.newId(),
+      gsActivations:[], gsUsed:{}, peakScore:initialScore, hands:[], ruleVersion:1, skills:[...PlayerRecords.progress.equipped], history:[], gameOver:false, npcId:npc.id, playerCount, difficulty:difficulty==='easy'?'easy':'normal', matchId:PlayerRecords.newId(),
       roundNumber:round, handNumber:1, turnNumber:1,
       currentSuit:CONFIG.suits[(round-1)%4], dealerIndex:0, currentPlayerIndex:0,
       maxTurns:CONFIG.maxTurnsByPlayerCount[playerCount],
@@ -19,12 +19,14 @@ const GameManager= {
   startHand() {
     if(typeof document!=='undefined')UIManager.clearMotion();
     const s=gameState;
+    GemSkillEngine.resetHand(s);
     s.deck=DeckManager.shuffle(CardManager.create());
     s.doraNumber=10+Math.floor(Math.random()*4);
     s.players.forEach(p=> {
       p.hand=[];
       p.draws=0;
       p.lastDrawnId=null;
+      p.lastDrawnCard=null;
       p.riichi=false;
     });
     for(let i=0; i<4; i++)s.players.forEach(p=>p.hand.push(s.deck.pop()));
@@ -66,6 +68,7 @@ const GameManager= {
     const s=gameState,
     cards=[...s.players[i].hand];
     if(card)cards.push(card);
+    if(i===0&&type==='tsumo'&&cards.length>5){GemSkillEngine.win();return;}
     const result=evaluateHand(cards, this.context(i, type));
     if(!result.isWinning)return;
     const transfers=ScoreManager.settle(s.players, i, s.currentPlayerIndex, type, result.multiplier,s.dealerIndex);
@@ -80,6 +83,13 @@ const GameManager= {
   },
   finish(result) {
     const s=gameState;
+    const handId=`${s.matchId}:${s.roundNumber}:${s.handNumber}`;
+    if(s.hands.some(hand=>hand.id===handId))return;
+    s.peakScore=Math.max(s.peakScore,s.players[0].score);
+    s.hands.push({id:handId,round:s.roundNumber,hand:s.handNumber,dealer:s.dealerIndex,
+      type:result.type,winner:result.type==='draw'?null:result.winner,
+      loser:result.type==='ron'?s.currentPlayerIndex:null,roles:[...(result.roles||[])],
+      riichi:s.players.map(p=>Boolean(p.riichi)),transfers:(result.transfers||[]).map(t=>({...t}))});
     s.result=result;
     if(result.type!=='draw')s.visualEvents=(s.visualEvents||[]).concat({type:result.type,player:result.winner});
     SoundManager.play(result.type==='draw'?'drawEnd':result.type);
@@ -88,6 +98,7 @@ const GameManager= {
     s.endReason=bankrupt?'持ち点が0点以下になったため対戦終了':s.roundOver?`規定の${s.playerCount}局が終了しました`:'';
     if(s.roundOver&&!s.history.some(h=>h.round===s.roundNumber))s.history.push(MatchScoreManager.field(s.roundNumber, s.players));
     s.gameOver=bankrupt||(s.roundOver&&s.roundNumber>=4);
+    s.gsChoice=null;s.gsFlow=null;s.gsKeep=null;s.gsCharge=false;
     s.phase='ended';
     s.message=result.type==='draw'?'流局 — 得点移動なし':`${s.players[result.winner].name}の${result.type==='tsumo'?'ツモ':'ロン'}！`;
     this.log(s.message);

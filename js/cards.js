@@ -18,7 +18,7 @@ const CardManager= {
     return cards;
   },
   suit(card, state) {
-    return card.isFaceCard?state.currentSuit:card.baseSuit;
+    return card.gsSuit||(card.isFaceCard?state.currentSuit:card.baseSuit);
   }
 };
 const HandSorter= {

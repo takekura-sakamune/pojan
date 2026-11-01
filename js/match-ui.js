@@ -161,7 +161,22 @@ const MatchUI= {
       const item=document.createElement('li');item.textContent=text;return item;
     }));
   },
+  hidePlayerScreens() {
+    for(const name of ['shop','stats','achievements'])document.getElementById(name+'-screen').hidden=true;
+  },
+  showPlayerScreen(name) {
+    if(!['shop','stats','achievements'].includes(name))return;
+    this.hidePlayerScreens();
+    document.getElementById('start-screen').hidden=true;
+    document.getElementById('game-screen').hidden=true;
+    document.getElementById('final-screen').hidden=true;
+    document.getElementById(name+'-screen').hidden=false;
+    this.renderRecords();
+    const title=document.getElementById(name+'-title');
+    if(typeof title.focus==='function')title.focus();
+  },
   showStart() {
+    this.hidePlayerScreens();
     UIManager.clearMotion();
     if(gameState) {
       gameState.phase='waiting';
@@ -180,6 +195,7 @@ const MatchUI= {
     if(![2,3,4].includes(count))return;
     const registration=this.registerNickname();
     if(!registration.ok)return;
+    this.hidePlayerScreens();
     UIManager.clearMotion();
     document.getElementById('start-screen').hidden=true;
     document.getElementById('game-screen').hidden=false;
@@ -206,6 +222,8 @@ const MatchUI= {
     const winners=totals.filter(p=>p.rank===1);
     document.getElementById('final-winner').textContent=winners.length===1?winners[0].name+'の総合優勝！':winners.map(p=>p.name).join('・')+'が同率1位';
     document.getElementById('record-save-status').textContent=s.recordStatus?s.recordStatus.message:'記録情報がありません。';
+    const reward=document.getElementById('gp-reward'),record=PlayerRecords.records.find(r=>r.id===s.matchId);
+    if(reward)reward.textContent=`獲得GP：${record?.reward?.total||0} ／ 現在 ${PlayerRecords.progress.balance} GP`+(record?.reward?.achievements?.length?' ／ NPC初勝利実績を達成！':'');
     document.getElementById('share-x').href=this.shareURL(s,totals);
     ResultImage.prepare(s,totals,this.shareText(s,totals));
     document.getElementById('final-screen').hidden=false;
@@ -257,7 +275,49 @@ const MatchUI= {
     }
     return table;
   },
+  renderProgress() {
+    const $=id=>document.getElementById(id);
+    if(!$('progress-panel'))return;
+    const p=PlayerRecords.progress,s=PlayerStats.summarize(PlayerRecords.records,{count:$('stats-count').value,difficulty:$('stats-difficulty').value});
+    const collection=`${p.unlocked.length} / ${GemSkills.entries.length}種類（${(p.unlocked.length/GemSkills.entries.length*100).toFixed(1)}%）`;
+    $('gp-balance').textContent=`ジェムポイント（GP）：${p.balance}`;
+    $('shop-balance').textContent=`所持GP：${p.balance}`;
+    const equipment=p.equipped.length?p.equipped.map(id=>GemSkills.entries.find(k=>k.id===id).name).join(' ／ '):'なし';
+    $('equipped-summary').textContent='装備GS：'+equipment;
+    const slots=p.equipped.reduce((sum,id)=>sum+GemSkills.entries.find(k=>k.id===id).slots,0);
+    $('shop-equipment').textContent=`装備：${equipment}（${slots} / 3枠）`;
+    $('collection-summary').textContent='購入済みGS：'+collection;
+    const achieved=NPCPool.entries.filter(npc=>p.achievements['npc-first:'+npc.id]).length;
+    $('achievement-summary').textContent=`初勝利実績：${achieved} / ${NPCPool.entries.length}達成`;
+    $('gp-transactions').replaceChildren(...p.transactions.slice().reverse().map(t=>{const row=document.createElement('p');row.textContent=`${t.label}：${t.amount>=0?'+':''}${t.amount} GP`;return row;}));
+    if(!p.transactions.length)$('gp-transactions').textContent='GPの獲得・購入履歴はまだありません。';
+    const lines=[`総対戦回数：${s.matches}`,`勝利数：2人 ${s.winsByCount[2]} ／ 3人 ${s.winsByCount[3]} ／ 4人 ${s.winsByCount[4]}`,`最大所持点：${s.highest===null?'記録なし':s.highest+'点'}`];
+    $('player-stats').replaceChildren(...lines.map(text=>{const el=document.createElement('p');el.textContent=text;return el;}));
+    $('npc-stats').replaceChildren(...NPCPool.entries.map(npc=>{
+      const el=document.createElement('p'),w=s.npcWins[npc.id]||{2:0,3:0,4:0};
+      el.textContent=`${npc.name}：2人 ${w[2]}勝 ／ 3人 ${w[3]}勝 ／ 4人 ${w[4]}勝`;return el;
+    }));
+    $('npc-achievements').replaceChildren(...NPCPool.entries.map(npc=>{
+      const el=document.createElement('article'),title=document.createElement('h3'),status=document.createElement('p');
+      const unlocked=Boolean(p.achievements['npc-first:'+npc.id]);
+      el.className='achievement-card'+(unlocked?' achieved':'');
+      title.textContent=npc.name+'への初勝利';status.textContent=unlocked?'達成済み':'未達成';
+      el.append(title,status);return el;
+    }));
+    $('gs-catalog').replaceChildren(...GemSkills.entries.map(skill=>{
+      const el=document.createElement('article'),description=document.createElement('p'),buy=document.createElement('button');
+      el.className='skill-card';
+      description.textContent=`${skill.name}（${skill.category}・${GemSkills.ranks[skill.rank].label}／${skill.slots}枠）：${skill.effect}`;
+      const owned=p.unlocked.includes(skill.id);buy.textContent=owned?'購入済み':`${skill.price} GPで購入`;
+      buy.disabled=owned||p.balance<skill.price||!PlayerRecords.persisted||!PlayerRecords.writable;
+      buy.onclick=()=>{const result=Progression.purchase(skill.id);$('progress-status').textContent=result.message;this.renderRecords();};
+      el.append(description,buy);
+      if(owned){const equip=document.createElement('button');equip.textContent=p.equipped.includes(skill.id)?'装備を外す':'装備する';equip.onclick=()=>{const result=Progression.equip(skill.id);$('progress-status').textContent=result.message;this.renderRecords();};el.append(equip);}
+      return el;
+    }));
+  },
   renderRecords() {
+    this.renderProgress();
     document.getElementById('records-status').textContent=`履歴 ${PlayerRecords.records.length}件。${PlayerRecords.status}`;
     document.getElementById('saved-records').replaceChildren(...PlayerRecords.records.map(record=>{
       const details=document.createElement('details'),summary=document.createElement('summary');
@@ -284,6 +344,16 @@ const MatchUI= {
     if(!['easy','normal'].includes(difficulty.value))difficulty.value='easy';
     difficulty.onchange=()=>{document.getElementById('difficulty-description').textContent=difficulty.value==='easy'?'ノーマル：打牌のミスが多く、CPUはリーチを宣言しません。':'本気：キャラクターごとの打ち筋で役・点数・守備を考えます。';};
     PlayerRecords.load();
+    for(const name of ['shop','stats','achievements']){
+      document.getElementById('open-'+name).onclick=()=>this.showPlayerScreen(name);
+      document.getElementById(name+'-back').onclick=()=>{
+        this.showStart();const button=document.getElementById('open-'+name);
+        if(typeof button.focus==='function')button.focus();
+      };
+    }
+    for(const id of ['stats-count','stats-difficulty']){
+      const filter=document.getElementById(id);if(filter)filter.onchange=()=>this.renderProgress();
+    }
     document.getElementById('player-nickname').value=PlayerRecords.nickname;
     document.getElementById('nickname-form').onsubmit=event=>{event.preventDefault();this.registerNickname();this.renderRecords();};
     document.getElementById('export-records').onclick=()=>this.downloadRecords();

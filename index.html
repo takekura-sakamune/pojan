@@ -56,12 +56,59 @@
         </div>
         <p>同じ相手と第四場まで対戦します。人数にかかわらず全員25000点で開始し、持ち点は第四場まで引き継ぎます。誰かが0点以下になると、その時点で対戦終了です。3人・4人対戦はNPCを重複なしでランダムに選びます。</p>
         <p class="start-rules">対戦終了時の所持点が多い順に順位を決定します。同じ所持点の場合は同順位です。</p>
+        <section id="progress-panel" aria-label="プレイヤーメニュー">
+          <p id="gp-balance"></p>
+          <p id="equipped-summary"></p>
+          <nav class="player-menu" aria-label="プレイヤーメニュー">
+            <button id="open-shop" type="button">ショップ</button>
+            <button id="open-stats" type="button">戦績</button>
+            <button id="open-achievements" type="button">実績</button>
+          </nav>
+        </section>
+      </section>
+    </main>
+    <main id="shop-screen" class="player-screen" aria-labelledby="shop-title" hidden>
+      <section class="start-card">
+        <header class="player-screen-header"><h1 id="shop-title" tabindex="-1">ショップ</h1><button id="shop-back" type="button">開始画面へ戻る</button></header>
+        <p id="shop-balance" class="balance-display"></p>
+        <p>ジェムポイント（GP）でジェムスキル（GS）を購入できます。すべて100 GPです。</p>
+        <p>2人対戦の勝利：100 GP。各NPCへの初勝利：追加300 GP。</p>
+        <p>装備は合計3枠。軽：1枠・毎局1回／中：2枠・毎場1回／重：3枠・1ゲーム1回。</p>
+        <p class="muted">GSは自分のツモ前に使用します。リーチ中は使用できません。</p>
+        <p id="shop-equipment"></p>
+        <p id="progress-status" role="status" aria-live="polite"></p>
+        <div id="gs-catalog" class="skill-grid"></div>
+        <details><summary>GP獲得・購入履歴</summary><div id="gp-transactions"></div></details>
+      </section>
+    </main>
+    <main id="stats-screen" class="player-screen" aria-labelledby="stats-title" hidden>
+      <section class="start-card">
+        <header class="player-screen-header"><h1 id="stats-title" tabindex="-1">戦績</h1><button id="stats-back" type="button">開始画面へ戻る</button></header>
+        <div class="stats-filters">
+          <label>人数 <select id="stats-count"><option value="">すべて</option><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option></select></label>
+          <label>難易度 <select id="stats-difficulty"><option value="">すべて</option><option value="easy">ノーマル</option><option value="normal">本気</option></select></label>
+        </div>
+        <div id="player-stats" class="stat-grid"></div>
+        <h2>NPC別勝利数</h2>
+        <div id="npc-stats"></div>
+        <p class="muted">最大所持点は完了した対戦が対象です。旧履歴は各場終了時の点数から集計します。勝利数には同率1位を含みません。</p>
         <details id="records-panel">
           <summary>対戦履歴</summary>
           <p id="records-status" role="status"></p>
           <div id="saved-records"></div>
           <button id="export-records" type="button">JSONでバックアップ</button>
         </details>
+      </section>
+    </main>
+    <main id="achievements-screen" class="player-screen" aria-labelledby="achievements-title" hidden>
+      <section class="start-card">
+        <header class="player-screen-header"><h1 id="achievements-title" tabindex="-1">実績</h1><button id="achievements-back" type="button">開始画面へ戻る</button></header>
+        <p id="achievement-summary" class="balance-display"></p>
+        <h2>NPCへの初勝利</h2>
+        <p>2人対戦で各NPCに初めて単独勝利すると達成します。初勝利ボーナスは300 GPです。</p>
+        <div id="npc-achievements" class="achievement-grid"></div>
+        <h2>ジェムスキル収集</h2>
+        <p id="collection-summary"></p>
       </section>
     </main>
     <main id="game-screen" hidden>
@@ -117,6 +164,7 @@
         </div>
         <div id="actions" class="row" role="group" aria-label="プレイヤー操作"></div>
       </section>
+      <section id="gs-game" aria-label="ジェムスキル操作" aria-live="polite" hidden></section>
       </div>
       </div>
       <div id="player-status">
@@ -157,6 +205,7 @@
         </div>
         <p id="final-winner" role="status"></p>
         <p id="record-save-status" role="status"></p>
+        <p id="gp-reward" role="status"></p>
         <a id="share-x" class="share-x" target="_blank" rel="noopener noreferrer">総合結果をXに投稿</a>
         <button id="save-result-image" type="button" disabled>画像を保存</button>
         <button id="share-result-image" type="button" disabled>画像付きで共有</button>
@@ -186,11 +235,14 @@
     <script defer src="js/cards.js"></script>
     <script defer src="js/hand-evaluator.js"></script>
     <script defer src="js/scoring.js"></script>
+    <script defer src="js/gem-skills.js"></script>
+    <script defer src="js/progression.js"></script>
     <script defer src="js/player-records.js"></script>
     <script defer src="js/npc.js"></script>
     <script defer src="js/npc-dialogue.js"></script>
     <script defer src="js/game.js"></script>
     <script defer src="js/turns.js"></script>
+    <script defer src="js/gem-skill-engine.js"></script>
     <script defer src="js/role-presenter.js"></script>
     <script defer src="js/ui.js"></script>
     <script defer src="js/match-ui.js"></script>
