@@ -59,6 +59,14 @@
         <section id="progress-panel" aria-label="プレイヤーメニュー">
           <p id="gp-balance"></p>
           <p id="equipped-summary"></p>
+          <div class="slot-legend" aria-label="装備枠の色とGSの種類">
+            <span class="slot-legend-item slot-stock">山札（水色）</span>
+            <span class="slot-legend-item slot-hand">手札（オレンジ）</span>
+            <span class="slot-legend-item slot-wisdom">情報（紫）</span>
+          </div>
+          <div id="start-equipment-slots" class="equipment-slots"></div>
+          <p id="start-equipment-status" role="status" aria-live="polite"></p>
+          <details id="start-equipment-editor"><summary>GSを付け替える</summary><div id="start-skill-picker"></div></details>
           <nav class="player-menu" aria-label="プレイヤーメニュー">
             <button id="open-shop" type="button">ショップ</button>
             <button id="open-stats" type="button">戦績</button>
@@ -74,14 +82,45 @@
     <main id="shop-screen" class="player-screen" aria-labelledby="shop-title" hidden>
       <section class="start-card">
         <header class="player-screen-header"><h1 id="shop-title" tabindex="-1">ショップ</h1><button id="shop-back" type="button">開始画面へ戻る</button></header>
-        <p id="shop-balance" class="balance-display"></p>
-        <p>ジェムポイント（GP）でジェムスキル（GS）を購入できます。すべて100 GPです。</p>
-        <p>2人対戦の勝利：100 GP。各NPCへの初勝利：追加300 GP。</p>
-        <p>装備は合計3枠。軽：1枠・毎局1回／中：2枠・毎場1回／重：3枠・1ゲーム1回。</p>
+        <div class="shop-keeper">
+          <img src="picture/shop.png" alt="ジェムスキルを販売する占い師" class="shop-keeper-image" draggable="false">
+          <div>
+            <span class="eyebrow">占い師のショップ</span>
+            <p class="shop-greeting">あなたの運命を変える力を、選んでいきなさい。</p>
+            <p id="shop-balance" class="balance-display"></p>
+            <p>ジェムポイント（GP）でジェムスキル（GS）を購入できます。必要GPは軽100・中200・重300です。</p>
+          </div>
+        </div>
+        <p>順位報酬：2人対戦100 GP／3人対戦200・100 GP／4人対戦300・200・100 GP。本気モードは順位報酬が2倍です。各NPCへの初勝利は追加300 GP。</p>
+        <p id="shop-slot-rule">装備は合計3枠。軽：1枠・毎局1回／中：2枠・毎場1回／重：3枠・1ゲーム1回。</p>
+        <p id="equipment-unlock"></p>
         <p class="muted">GSは自分のツモ前に使用します。リーチ中は使用できません。</p>
         <p id="shop-equipment"></p>
+        <div class="slot-legend" aria-label="装備枠の色とGSの種類">
+            <span class="slot-legend-item slot-stock">山札（水色）</span>
+            <span class="slot-legend-item slot-hand">手札（オレンジ）</span>
+            <span class="slot-legend-item slot-wisdom">情報（紫）</span>
+          </div>
+        <div id="shop-equipment-slots" class="equipment-slots"></div>
+        <details id="shop-equipment-editor" open><summary>購入済みGSから付け替える</summary><div id="shop-skill-picker"></div></details>
         <p id="progress-status" role="status" aria-live="polite"></p>
-        <div id="gs-catalog" class="skill-grid"></div>
+        <div class="shop-tabs" role="tablist" aria-label="GSの種類">
+          <button id="shop-tab-hand" type="button" role="tab" aria-selected="true" aria-controls="shop-category-panel" tabindex="0">手札</button>
+          <button id="shop-tab-stock" type="button" role="tab" aria-selected="false" aria-controls="shop-category-panel" tabindex="-1">山札</button>
+          <button id="shop-tab-wisdom" type="button" role="tab" aria-selected="false" aria-controls="shop-category-panel" tabindex="-1">情報</button>
+        </div>
+        <div id="shop-category-panel" class="shop-category-panel" role="tabpanel" aria-labelledby="shop-tab-hand">
+          <figure class="shop-category-character">
+            <img id="shop-category-image" src="picture/skill_hand.png" alt="手札のGSのキャラクター" draggable="false">
+            <figcaption id="shop-category-caption">手札のGS</figcaption>
+          </figure>
+          <div class="shop-category-products">
+            <h2 id="shop-category-title">手札のGS</h2>
+            <p id="shop-category-description" class="muted"></p>
+            <p id="shop-heavy-condition" role="status"></p>
+            <div id="gs-catalog" class="skill-grid"></div>
+          </div>
+        </div>
         <details><summary>GP獲得・購入履歴</summary><div id="gp-transactions"></div></details>
       </section>
     </main>
@@ -111,6 +150,9 @@
         <h2>NPCへの初勝利</h2>
         <p>2人対戦で各NPCに初めて単独勝利すると達成します。初勝利ボーナスは300 GPです。</p>
         <div id="npc-achievements" class="achievement-grid"></div>
+        <h2>対戦回数・本気モードの実績</h2>
+        <p>完了した対戦が対象です。実績報酬は各1回の固定額で、本気モードの2倍対象には含みません。</p>
+        <div id="reward-achievements" class="achievement-grid"></div>
         <h2>ジェムスキル収集</h2>
         <p id="collection-summary"></p>
       </section>
@@ -210,6 +252,7 @@
         <p id="final-winner" role="status"></p>
         <p id="record-save-status" role="status"></p>
         <p id="gp-reward" role="status"></p>
+        <p id="gp-reward-details"></p>
         <a id="share-x" class="share-x" target="_blank" rel="noopener noreferrer">総合結果をXに投稿</a>
         <button id="save-result-image" type="button" disabled>画像を保存</button>
         <button id="share-result-image" type="button" disabled>画像付きで共有</button>

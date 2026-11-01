@@ -133,6 +133,18 @@ const ResultImage={
 // 開始画面と最終結果
 const MatchUI= {
   selectedNPC:'random',
+  shopCategory:'hand',
+  shopCategories:{
+    hand:{label:'手札',image:'picture/skill_hand.png',description:'交換・保管・数字の変更など、手札を整えるGSです。'},
+    stock:{label:'山札',image:'picture/skill_stock.png',description:'引き直し・並べ替えなど、山札に働きかけるGSです。'},
+    wisdom:{label:'情報',image:'picture/skill_wisdom.png',description:'相手の手札や山札などの情報を確認するGSです。'}
+  },
+  selectShopCategory(category) {
+    if(!this.shopCategories[category])return;
+    this.shopCategory=category;
+    document.getElementById('progress-status').textContent='';
+    this.renderProgress();
+  },
   updateNPCSelection() {
     const twoPlayer=Number(document.getElementById('player-count').value)===2;
     document.getElementById('npc-selection').hidden=!twoPlayer;
@@ -166,6 +178,7 @@ const MatchUI= {
   },
   showPlayerScreen(name) {
     if(!['shop','stats','achievements'].includes(name))return;
+    this.equipmentSwap=null;
     this.hidePlayerScreens();
     document.getElementById('start-screen').hidden=true;
     document.getElementById('game-screen').hidden=true;
@@ -176,6 +189,7 @@ const MatchUI= {
     if(typeof title.focus==='function')title.focus();
   },
   showStart() {
+    this.equipmentSwap=null;
     this.hidePlayerScreens();
     UIManager.clearMotion();
     if(gameState) {
@@ -223,7 +237,9 @@ const MatchUI= {
     document.getElementById('final-winner').textContent=winners.length===1?winners[0].name+'の総合優勝！':winners.map(p=>p.name).join('・')+'が同率1位';
     document.getElementById('record-save-status').textContent=s.recordStatus?s.recordStatus.message:'記録情報がありません。';
     const reward=document.getElementById('gp-reward'),record=PlayerRecords.records.find(r=>r.id===s.matchId);
-    if(reward)reward.textContent=`獲得GP：${record?.reward?.total||0} ／ 現在 ${PlayerRecords.progress.balance} GP`+(record?.reward?.achievements?.length?' ／ NPC初勝利実績を達成！':'');
+    if(reward)reward.textContent=`獲得GP：${record?.reward?.total||0} ／ 現在 ${PlayerRecords.progress.balance} GP`+(record?.reward?.achievements?.length?' ／ 新しい実績を達成！':'');
+    const rewardDetails=document.getElementById('gp-reward-details');
+    if(rewardDetails)rewardDetails.textContent=(record?.reward?.parts||[]).map(part=>`${part.label}：${part.amount} GP`).join(' ／ ')+(record?.reward?.achievements?.includes('hard-all')?' ／ GS装備枠が4に拡張されました！':'');
     document.getElementById('share-x').href=this.shareURL(s,totals);
     ResultImage.prepare(s,totals,this.shareText(s,totals));
     document.getElementById('final-screen').hidden=false;
@@ -275,6 +291,89 @@ const MatchUI= {
     }
     return table;
   },
+  equipmentSwap:null,
+  equipmentMessage(message){
+    document.getElementById('progress-status').textContent=message;
+    document.getElementById('start-equipment-status').textContent=message;
+  },
+  changeEquipment(id){
+    const p=PlayerRecords.progress,k=GemSkills.entries.find(k=>k.id===id);
+    if(!k||!p.unlocked.includes(id))return;
+    const used=p.equipped.reduce((sum,id)=>sum+GemSkills.entries.find(k=>k.id===id).slots,0);
+    this.equipmentSwap=null;
+    if(!p.equipped.includes(id)&&used+k.slots>Progression.capacity(p)){
+      this.equipmentSwap={id,remove:[]};
+      document.getElementById('start-equipment-editor').open=true;
+      document.getElementById('shop-equipment-editor').open=true;
+      this.equipmentMessage('入れ替えるGSを選んでください。');
+    }else this.equipmentMessage(Progression.equip(id).message);
+    this.renderProgress();
+  },
+  renderSkillPicker(id,p,capacity){
+    const root=document.getElementById(id),nodes=[];
+    const text=message=>{const el=document.createElement('p');el.textContent=message;nodes.push(el);};
+    const button=(label,action,disabled=false)=>{const el=document.createElement('button');el.textContent=label;el.type='button';el.disabled=disabled;el.onclick=action;return el;};
+    text('装備枠のGSを押すと外せます。購入済みGSは種類をまたいで選べます。');
+    if(!p.unlocked.length)text('購入済みのGSはまだありません。ショップで購入するとここに表示されます。');
+    const list=document.createElement('div');list.className='owned-skill-list';
+    for(const skill of GemSkills.entries.filter(k=>p.unlocked.includes(k.id))){
+      const equipped=p.equipped.includes(skill.id),b=button(`${skill.name}・${skill.slots}枠${equipped?'【装備中】':''}`,()=>this.changeEquipment(skill.id));
+      b.className='owned-skill slot-'+this.slotCategory(skill.category);b.setAttribute('aria-pressed',String(equipped));b.setAttribute('title',skill.effect);list.append(b);
+    }
+    nodes.push(list);
+    if(p.equipped.length)nodes.push(button('すべて外す',()=>{const result=Progression.setEquipment([]);this.equipmentSwap=null;this.equipmentMessage(result.message);this.renderProgress();}));
+    const swap=this.equipmentSwap;
+    if(swap){
+      const skill=GemSkills.entries.find(k=>k.id===swap.id);
+      const remaining=p.equipped.filter(k=>!swap.remove.includes(k));
+      const used=remaining.reduce((sum,k)=>sum+GemSkills.entries.find(s=>s.id===k).slots,0)+skill.slots;
+      text(`${skill.name}（${skill.slots}枠）に入れ替え：外すGSを選択してください。選択後 ${used} / ${capacity}枠`);
+      const choices=document.createElement('div');choices.className='equipment-replace-options';
+      for(const skillId of p.equipped){
+        const k=GemSkills.entries.find(k=>k.id===skillId),selected=swap.remove.includes(skillId);
+        const b=button(`${selected?'外す：':'残す：'}${k.name}（${k.slots}枠）`,()=>{swap.remove=selected?swap.remove.filter(k=>k!==skillId):[...swap.remove,skillId];this.renderProgress();});
+        b.setAttribute('aria-pressed',String(selected));choices.append(b);
+      }
+      nodes.push(choices);
+      nodes.push(button('この組み合わせに入れ替える',()=>{
+        const result=Progression.setEquipment([...PlayerRecords.progress.equipped.filter(k=>!swap.remove.includes(k)),swap.id]);
+        if(result.ok)this.equipmentSwap=null;this.equipmentMessage(result.message);this.renderProgress();
+      },used>capacity));
+      nodes.push(button('入れ替えをキャンセル',()=>{this.equipmentSwap=null;this.equipmentMessage('入れ替えをキャンセルしました。');this.renderProgress();}));
+    }
+    root.replaceChildren(...nodes);
+  },
+  slotCategory(category) {return {'手札':'hand','山札':'stock','情報':'wisdom'}[category];},
+  slotBadge(skill,capacity) {
+    const badge=document.createElement('span'),label=document.createElement('span'),squares=document.createElement('span');
+    badge.className='skill-slot-badge slot-'+this.slotCategory(skill.category);
+    badge.setAttribute('aria-label',`${skill.name}は${skill.slots}枠使用`);
+    label.textContent=`${skill.slots}枠使用`;squares.className='slot-squares';squares.setAttribute('aria-hidden','true');
+    for(let i=0;i<capacity;i++){const square=document.createElement('span');square.className='slot-square'+(i<skill.slots?' filled':'');squares.append(square);}
+    badge.append(squares,label);return badge;
+  },
+  renderEquipmentSlots(id,progress,capacity) {
+    const root=document.getElementById(id),groups=[];
+    let used=0;
+    for(const skillId of progress.equipped){
+      const skill=GemSkills.entries.find(k=>k.id===skillId),group=document.createElement('button'),boxes=document.createElement('div'),label=document.createElement('span');
+      group.type='button';group.onclick=()=>this.changeEquipment(skillId);group.setAttribute('aria-label',skill.category+'のGS・'+skill.name+'を装備から外す');
+      group.className='equipment-slot-group slot-'+this.slotCategory(skill.category);group.style.gridColumn=`span ${skill.slots}`;
+      boxes.className='equipment-slot-boxes';
+      for(let i=0;i<skill.slots;i++){const box=document.createElement('span');box.className='equipment-slot filled';box.textContent=String(used+i+1);box.setAttribute('aria-hidden','true');boxes.append(box);}
+      label.className='equipment-slot-label';label.textContent=`${skill.name}（${skill.category}・${skill.slots}枠）`;
+      group.append(boxes,label);groups.push(group);used+=skill.slots;
+    }
+    for(let i=used;i<capacity;i++){
+      const group=document.createElement('button'),box=document.createElement('span'),label=document.createElement('span');
+      group.type='button';group.setAttribute('aria-label','空き枠にGSを装備する');group.onclick=()=>{document.getElementById(id==='start-equipment-slots'?'start-equipment-editor':'shop-equipment-editor').open=true;};
+      group.className='equipment-slot-group empty';box.className='equipment-slot';box.textContent=String(i+1);box.setAttribute('aria-hidden','true');
+      label.className='equipment-slot-label';label.textContent='空き';group.append(box,label);groups.push(group);
+    }
+    root.style.gridTemplateColumns=`repeat(${capacity}, minmax(0, 1fr))`;
+    root.setAttribute('role','group');root.setAttribute('aria-label',`GS装備枠：${capacity}枠中${used}枠使用、空き${capacity-used}枠`);
+    root.replaceChildren(...groups);
+  },
   renderProgress() {
     const $=id=>document.getElementById(id);
     if(!$('progress-panel'))return;
@@ -285,10 +384,25 @@ const MatchUI= {
     const equipment=p.equipped.length?p.equipped.map(id=>GemSkills.entries.find(k=>k.id===id).name).join(' ／ '):'なし';
     $('equipped-summary').textContent='装備GS：'+equipment;
     const slots=p.equipped.reduce((sum,id)=>sum+GemSkills.entries.find(k=>k.id===id).slots,0);
-    $('shop-equipment').textContent=`装備：${equipment}（${slots} / 3枠）`;
+    const capacity=Progression.capacity(p);
+    this.renderEquipmentSlots('start-equipment-slots',p,capacity);
+    this.renderEquipmentSlots('shop-equipment-slots',p,capacity);
+    this.renderSkillPicker('start-skill-picker',p,capacity);
+    this.renderSkillPicker('shop-skill-picker',p,capacity);
+    $('shop-equipment').textContent=`装備：${equipment}（${slots} / ${capacity}枠）`;
+    $('shop-slot-rule').textContent=`装備は合計${capacity}枠。軽：1枠・毎局1回／中：2枠・毎場1回／重：3枠・1ゲーム1回。`;
+    $('equipment-unlock').textContent=capacity===4?'全NPCの本気モードに単独勝利：装備枠が4に拡張されています。':'全NPCの本気モードに単独勝利すると、装備枠が3から4に増えます。';
     $('collection-summary').textContent='購入済みGS：'+collection;
     const achieved=NPCPool.entries.filter(npc=>p.achievements['npc-first:'+npc.id]).length;
-    $('achievement-summary').textContent=`初勝利実績：${achieved} / ${NPCPool.entries.length}達成`;
+    const additional=Progression.achievementDefinitions.filter(def=>p.achievements[def.id]).length;
+    $('achievement-summary').textContent=`実績：${achieved+additional} / ${NPCPool.entries.length+Progression.achievementDefinitions.length}達成`;
+    $('reward-achievements').replaceChildren(...Progression.achievementDefinitions.map(def=>{
+      const el=document.createElement('article'),title=document.createElement('h3'),status=document.createElement('p');
+      const unlocked=Boolean(p.achievements[def.id]),progress=Progression.achievementProgress(def,PlayerRecords.records);
+      el.className='achievement-card'+(unlocked?' achieved':'');title.textContent=def.name;
+      status.textContent=`${unlocked?'達成済み':`${Math.min(progress.value,progress.target)} / ${progress.target}`} ／ ${def.reward} GP`+(def.id==='hard-all'?' ＋ 装備枠4に拡張':'');
+      el.append(title,status);return el;
+    }));
     $('gp-transactions').replaceChildren(...p.transactions.slice().reverse().map(t=>{const row=document.createElement('p');row.textContent=`${t.label}：${t.amount>=0?'+':''}${t.amount} GP`;return row;}));
     if(!p.transactions.length)$('gp-transactions').textContent='GPの獲得・購入履歴はまだありません。';
     const lines=[`総対戦回数：${s.matches}`,`勝利数：2人 ${s.winsByCount[2]} ／ 3人 ${s.winsByCount[3]} ／ 4人 ${s.winsByCount[4]}`,`最大所持点：${s.highest===null?'記録なし':s.highest+'点'}`];
@@ -304,7 +418,22 @@ const MatchUI= {
       title.textContent=npc.name+'への初勝利';status.textContent=unlocked?'達成済み':'未達成';
       el.append(title,status);return el;
     }));
-    $('gs-catalog').replaceChildren(...GemSkills.entries.map(skill=>{
+    const category=this.shopCategories[this.shopCategory];
+    for(const key of Object.keys(this.shopCategories)){
+      const tab=$('shop-tab-'+key),selected=key===this.shopCategory;
+      tab.setAttribute('aria-selected',String(selected));tab.setAttribute('tabindex',selected?'0':'-1');
+    }
+    $('shop-category-panel').setAttribute('aria-labelledby','shop-tab-'+this.shopCategory);
+    $('shop-category-image').src=category.image;
+    $('shop-category-image').alt=category.label+'のGSのキャラクター';
+    $('shop-category-caption').textContent=category.label+'のGS';
+    $('shop-category-title').textContent=category.label+'のGS';
+    $('shop-category-description').textContent=category.description;
+    const requirement=Progression.heavyRequirements[category.label];
+    $('shop-heavy-condition').textContent=Progression.heavyUnlocked(category.label)
+      ?'重スキル：開放済み'
+      :`重スキル：${requirement.name}の本気モードに単独1位で勝利すると表示されます。`;
+    $('gs-catalog').replaceChildren(...GemSkills.entries.filter(skill=>skill.category===category.label&&Progression.skillVisible(skill)).map(skill=>{
       const el=document.createElement('article'),description=document.createElement('p'),buy=document.createElement('button');
       el.className='skill-card';
       description.textContent=`${skill.name}（${skill.category}・${GemSkills.ranks[skill.rank].label}／${skill.slots}枠）：${skill.effect}`;
@@ -312,7 +441,8 @@ const MatchUI= {
       buy.disabled=owned||p.balance<skill.price||!PlayerRecords.persisted||!PlayerRecords.writable;
       buy.onclick=()=>{const result=Progression.purchase(skill.id);$('progress-status').textContent=result.message;this.renderRecords();};
       el.append(description,buy);
-      if(owned){const equip=document.createElement('button');equip.textContent=p.equipped.includes(skill.id)?'装備を外す':'装備する';equip.onclick=()=>{const result=Progression.equip(skill.id);$('progress-status').textContent=result.message;this.renderRecords();};el.append(equip);}
+      if(owned){const equip=document.createElement('button');equip.textContent=p.equipped.includes(skill.id)?'装備を外す':'装備する';equip.onclick=()=>this.changeEquipment(skill.id);el.append(equip);}
+      el.append(this.slotBadge(skill,capacity));
       return el;
     }));
   },
@@ -346,7 +476,8 @@ const MatchUI= {
     if(result.ok){
       this.showStart();
       gameState=undefined;
-      this.selectedNPC='random';
+      this.selectedNPC='random';this.shopCategory='hand';this.equipmentSwap=null;
+      document.getElementById('start-equipment-status').textContent='';
       document.getElementById('player-nickname').value=PlayerRecords.nickname;
       document.getElementById('nickname-status').textContent='';
       document.getElementById('progress-status').textContent='';
@@ -365,6 +496,22 @@ const MatchUI= {
     difficulty.onchange=()=>{document.getElementById('difficulty-description').textContent=difficulty.value==='easy'?'ノーマル：打牌のミスが多く、CPUはリーチを宣言しません。':'本気：キャラクターごとの打ち筋で役・点数・守備を考えます。';};
     PlayerRecords.load();
     document.getElementById('reset-data').onclick=()=>this.resetData();
+    const categories=Object.keys(this.shopCategories);
+    categories.forEach((category,index)=>{
+      const tab=document.getElementById('shop-tab-'+category);
+      tab.onclick=()=>this.selectShopCategory(category);
+      tab.onkeydown=event=>{
+        let next;
+        if(event.key==='ArrowRight')next=(index+1)%categories.length;
+        else if(event.key==='ArrowLeft')next=(index+categories.length-1)%categories.length;
+        else if(event.key==='Home')next=0;
+        else if(event.key==='End')next=categories.length-1;
+        else return;
+        event.preventDefault();this.selectShopCategory(categories[next]);
+        const target=document.getElementById('shop-tab-'+categories[next]);
+        if(typeof target.focus==='function')target.focus();
+      };
+    });
     for(const name of ['shop','stats','achievements']){
       document.getElementById('open-'+name).onclick=()=>this.showPlayerScreen(name);
       document.getElementById(name+'-back').onclick=()=>{

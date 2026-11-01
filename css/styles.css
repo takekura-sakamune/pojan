@@ -960,3 +960,56 @@ td,th {
 .reset-data-controls { margin-top: 28px; padding-top: 18px; border-top: 1px solid #3b5354; }
 button.danger-button { color: #ffd6cf; background: #542e2e; border-color: #b76b65; }
 button.danger-button:hover { background: #6b3535; }
+
+/* 占い師と種類別のGS売り場 */
+.shop-keeper { display: flex; align-items: center; gap: 24px; padding: 16px; margin-block: 20px; border: 1px solid #715d7d; border-radius: 14px; background: linear-gradient(120deg, #30263b, #172c30); }
+.shop-keeper-image { display: block; width: 155px; height: 220px; object-fit: contain; flex: 0 0 auto; }
+.shop-keeper .shop-greeting { font-size: 17px; color: #f1d8a5; }
+.shop-tabs { display: flex; gap: 8px; margin-top: 24px; border-bottom: 1px solid #75877b; padding-bottom: 10px; }
+.shop-tabs button { flex: 1; }
+.shop-tabs button[aria-selected="true"] { color: #182d31; background: #dec18a; border-color: #dec18a; }
+.shop-tabs button:focus-visible { outline: 3px solid #80d8cf; outline-offset: 3px; }
+.shop-category-panel { display: grid; grid-template-columns: minmax(160px, 230px) minmax(0, 1fr); gap: 20px; align-items: start; margin-block: 20px; }
+.shop-category-character { margin: 0; position: sticky; top: 16px; text-align: center; }
+.shop-category-character img { display: block; width: 100%; height: 340px; object-fit: contain; }
+.shop-category-character figcaption { color: #dec18a; margin-top: 10px; }
+.shop-category-products { min-width: 0; }
+.player-screen .shop-category-products h2 { margin-top: 0; }
+@media (max-width: 600px) {
+  .shop-keeper { gap: 12px; padding: 12px; }
+  .shop-keeper-image { width: 95px; height: 160px; }
+  .shop-keeper .shop-greeting { font-size: 14px; }
+  .shop-category-panel { grid-template-columns: minmax(0, 1fr); }
+  .shop-category-character { position: static; }
+  .shop-category-character img { height: 240px; }
+}
+
+/* GSの必要枠と装備中の占有範囲 */
+.equipment-slots { display: grid; gap: 8px; margin: 12px 0 20px; }
+.slot-hand { --slot-color: #ffb36b; --slot-fill: #57351f; }
+.slot-stock { --slot-color: #80d8ef; --slot-fill: #214b59; }
+.slot-wisdom { --slot-color: #c4a3ef; --slot-fill: #403254; }
+.equipment-slot-group { min-width: 0; padding: 8px; border: 1px solid var(--slot-color, #52696a); border-radius: 9px; background: #102529; text-align: center; }
+.equipment-slot-group.empty { border-style: dashed; color: #a8b9b8; }
+.equipment-slot-boxes { display: flex; gap: 6px; }
+.equipment-slot { display: flex; flex: 1; height: 32px; align-items: center; justify-content: center; border: 1px solid #52696a; border-radius: 5px; color: #a8b9b8; }
+.equipment-slot.filled { border-color: var(--slot-color); background: var(--slot-fill); color: var(--slot-color); font-weight: bold; }
+.equipment-slot-label { display: block; font-size: 12px; margin-top: 8px; overflow-wrap: anywhere; }
+.skill-slot-badge { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 12px; font-size: 12px; color: var(--slot-color); }
+.slot-squares { display: inline-flex; gap: 4px; }
+.slot-square { width: 16px; height: 16px; border: 1px solid #52696a; border-radius: 3px; background: #102529; }
+.slot-square.filled { background: var(--slot-color); border-color: var(--slot-color); }
+@media (max-width: 420px) { .equipment-slots { gap: 5px; } .equipment-slot-group { padding: 6px 4px; } .equipment-slot-label { font-size: 11px; } }
+
+.owned-skill-list, .equipment-replace-options { display: flex; gap: 8px; flex-wrap: wrap; margin-block: 14px; }
+.owned-skill { font-size: 13px; border-color: var(--slot-color); }
+.owned-skill[aria-pressed="true"] { background: var(--slot-fill); color: var(--slot-color); box-shadow: inset 0 0 0 1px var(--slot-color); }
+.equipment-replace-options button[aria-pressed="true"] { border-color: #dec18a; background: #51452b; }
+button.equipment-slot-group { font: inherit; cursor: pointer; color: #f1eee2; }
+button.equipment-slot-group:hover { background: #243f42; }
+button.equipment-slot-group:focus-visible { outline: 3px solid #80d8cf; outline-offset: 3px; }
+#start-skill-picker > button, #shop-skill-picker > button { margin: 4px; }
+
+.slot-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-block: 8px; font-size: 12px; }
+.slot-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.slot-legend-item::before { content: ''; width: 12px; height: 12px; background: var(--slot-color); border-radius: 3px; }

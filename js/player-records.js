@@ -71,7 +71,8 @@ const PlayerRecords = {
       }
       this.persisted=true;
       this.status='このブラウザ内に保存します。';
-      if(raw&&current===null)this.write();
+      const extra=Progression.unlockAchievements(this.records,this.progress);
+      if((raw&&current===null)||extra.unlocked.length)this.write();
     } catch (_) {
       this.persisted=false;
       this.status='ブラウザ内保存を利用できません。この画面を開いている間のみ保持します。JSONでバックアップできます。';
