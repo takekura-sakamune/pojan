@@ -4,7 +4,7 @@
 const PlayerRecords = {
   key: 'pojan.playerRecords.v2',
   legacyKey: 'pojan.playerRecords.v1',
-  progress: {balance:0,transactions:[],unlocked:[],equipped:[],achievements:{}},
+  progress: Progression.empty(),
   nickname: 'あなた',
   records: [],
   writable: true,
@@ -93,6 +93,24 @@ const PlayerRecords = {
       this.status='ブラウザ内に保存できませんでした。記録は画面内で保持しています。JSONでバックアップしてください。';
       return false;
     }
+  },
+  reset() {
+    const progress=Progression.empty();
+    let previous,legacyRemoved=false;
+    try {
+      if(typeof localStorage==='undefined')throw new Error('storage unavailable');
+      previous=localStorage.getItem(this.legacyKey);
+      // 旧形式が復元されないよう削除し、新形式に初期状態を保存する。
+      localStorage.removeItem(this.legacyKey);legacyRemoved=true;
+      localStorage.setItem(this.key,JSON.stringify({version:2,nickname:'あなた',records:[],progress}));
+    } catch (_) {
+      if(legacyRemoved&&previous!==null){try{localStorage.setItem(this.legacyKey,previous);}catch(_){}}
+      return {ok:false,message:'データを初期化できませんでした。ブラウザの保存設定を確認して、もう一度お試しください。'};
+    }
+    this.nickname='あなた';this.records=[];this.progress=progress;
+    this.writable=true;this.persisted=true;
+    this.status='データを削除して初期状態に戻しました。';
+    return {ok:true,message:this.status+' 初期所持GPは100です。'};
   },
   registerNickname(value) {
     const name=this.cleanName(value);

@@ -339,11 +339,32 @@ const MatchUI= {
       document.getElementById('record-save-status').textContent='JSONダウンロードを開始できませんでした。';
     }
   },
+  resetData() {
+    const message='ニックネーム、対戦履歴・戦績、実績、GP、購入・装備したGSをすべて削除します。\nこの操作は元に戻せません。初期所持100 GPの状態からはじめます。\n\n削除してはじめからにしますか？';
+    if(typeof window==='undefined'||!window.confirm(message))return;
+    const result=PlayerRecords.reset();
+    if(result.ok){
+      this.showStart();
+      gameState=undefined;
+      this.selectedNPC='random';
+      document.getElementById('player-nickname').value=PlayerRecords.nickname;
+      document.getElementById('nickname-status').textContent='';
+      document.getElementById('progress-status').textContent='';
+      document.getElementById('player-count').value='2';
+      document.getElementById('difficulty').value='easy';
+      document.getElementById('difficulty').onchange();
+      document.getElementById('stats-count').value='';
+      document.getElementById('stats-difficulty').value='';
+      this.updateNPCSelection();this.renderRecords();
+    }
+    document.getElementById('reset-status').textContent=result.message;
+  },
   bind() {
     const difficulty=document.getElementById('difficulty');
     if(!['easy','normal'].includes(difficulty.value))difficulty.value='easy';
     difficulty.onchange=()=>{document.getElementById('difficulty-description').textContent=difficulty.value==='easy'?'ノーマル：打牌のミスが多く、CPUはリーチを宣言しません。':'本気：キャラクターごとの打ち筋で役・点数・守備を考えます。';};
     PlayerRecords.load();
+    document.getElementById('reset-data').onclick=()=>this.resetData();
     for(const name of ['shop','stats','achievements']){
       document.getElementById('open-'+name).onclick=()=>this.showPlayerScreen(name);
       document.getElementById(name+'-back').onclick=()=>{

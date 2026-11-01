@@ -30,7 +30,7 @@ const PlayerStats={
 };
 const Progression={
   maxBalance:999999999,
-  empty(){return {balance:0,transactions:[],unlocked:[],equipped:[],achievements:{}};},
+  empty(){return {balance:100,transactions:[{id:"initial-gp",amount:100,label:"初期GP"}],unlocked:[],equipped:[],achievements:{}};},
   valid(p){
     return Boolean(p&&Number.isSafeInteger(p.balance)&&p.balance>=0&&p.balance<=this.maxBalance&&
       Array.isArray(p.transactions)&&p.transactions.every(t=>t&&typeof t.id==='string'&&typeof t.label==='string'&&Number.isSafeInteger(t.amount))&&
