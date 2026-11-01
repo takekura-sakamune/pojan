@@ -1013,3 +1013,6 @@ button.equipment-slot-group:focus-visible { outline: 3px solid #80d8cf; outline-
 .slot-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-block: 8px; font-size: 12px; }
 .slot-legend-item { display: inline-flex; align-items: center; gap: 6px; }
 .slot-legend-item::before { content: ''; width: 12px; height: 12px; background: var(--slot-color); border-radius: 3px; }
+
+#shop-keeper-image, #shop-category-image { cursor: zoom-in; }
+#shop-keeper-image:focus-visible, #shop-category-image:focus-visible { outline: 3px solid #80d8cf; outline-offset: 4px; border-radius: 8px; }

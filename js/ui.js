@@ -6,10 +6,13 @@ const UIManager= {
   openPortrait(npcId) {
     const npc=NPCPool.entries.find(p=>p.id===npcId);
     if(!npc)return;
+    this.openImagePortrait(NPC_FULL_IMAGES[npcId],npc.name);
+  },
+  openImagePortrait(src,name) {
     const dialog=document.getElementById('portrait-dialog');
     const image=document.getElementById('portrait-large');
-    image.src=NPC_FULL_IMAGES[npcId];image.alt=npc.name;
-    document.getElementById('portrait-title').textContent=npc.name;
+    image.src=src;image.alt=name;
+    document.getElementById('portrait-title').textContent=name;
     if(!dialog.open)dialog.showModal();
   },
   bindPortraits() {
@@ -21,16 +24,21 @@ const UIManager= {
       if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close();
     };
     dialog.oncancel=event=>{event.preventDefault();dialog.close();};
-    const bind=(image,resolve)=>{
+    const bind=(image,resolve,open=id=>this.openPortrait(id))=>{
       image.setAttribute('role','button');image.setAttribute('tabindex','0');
       image.setAttribute('aria-haspopup','dialog');image.setAttribute('aria-controls','portrait-dialog');
       image.setAttribute('title','クリックして大きな画像を表示');
-      image.onclick=()=>{if(!image.hidden)this.openPortrait(resolve());};
+      image.onclick=()=>{if(!image.hidden)open(resolve());};
       image.onkeydown=event=>{
         if(event.key==='Enter'||event.key===' '){event.preventDefault();image.onclick();}
       };
     };
     bind(document.getElementById('npc-preview-image'),()=>MatchUI.selectedNPC);
+    bind(document.getElementById('shop-keeper-image'),()=>({src:'picture/shop.png',name:'占い師'}),portrait=>this.openImagePortrait(portrait.src,portrait.name));
+    bind(document.getElementById('shop-category-image'),()=>{
+      const category=MatchUI.shopCategories[MatchUI.shopCategory];
+      return {src:category.image,name:category.label+'のGSのキャラクター'};
+    },portrait=>this.openImagePortrait(portrait.src,portrait.name));
     for(let index=1;index<=3;index++)bind(this.npcElement('npc-face',index),()=>gameState?.players[index]?.npcId);
   },
   roundLabel(round) {
