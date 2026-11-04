@@ -1016,3 +1016,83 @@ button.equipment-slot-group:focus-visible { outline: 3px solid #80d8cf; outline-
 
 #shop-keeper-image, #shop-category-image { cursor: zoom-in; }
 #shop-keeper-image:focus-visible, #shop-category-image:focus-visible { outline: 3px solid #80d8cf; outline-offset: 4px; border-radius: 8px; }
+
+/* 開始画面・ショップの装備枠は金色の共通ボタンより優先し、明暗差を確保する。 */
+:is(#start-equipment-slots, #shop-equipment-slots) button.equipment-slot-group {
+  background: #13242b;
+  border: 2px solid var(--slot-color, #718593);
+  color: #f8fafc;
+  padding: 10px 8px;
+}
+:is(#start-equipment-slots, #shop-equipment-slots) button.equipment-slot-group:hover {
+  background: #21343e;
+  border-color: var(--slot-color, #a9bac6);
+}
+:is(#start-equipment-slots, #shop-equipment-slots) .equipment-slot-label {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+:is(#start-equipment-slots, #shop-equipment-slots) .equipment-slot.filled {
+  background: var(--slot-fill);
+  color: var(--slot-color);
+  border: 2px solid var(--slot-color);
+}
+:is(#start-equipment-slots, #shop-equipment-slots) button.equipment-slot-group.empty {
+  background: #172830;
+  border: 2px dashed #718593;
+}
+:is(#start-equipment-slots, #shop-equipment-slots) button.equipment-slot-group.empty:hover { background: #21343e; }
+:is(#start-equipment-slots, #shop-equipment-slots) .empty .equipment-slot {
+  background: #172830;
+  border-color: #718593;
+  color: #cbd5e1;
+}
+:is(#start-equipment-slots, #shop-equipment-slots) .empty .equipment-slot-label { color: #cbd5e1; }
+/* 開始画面は操作と装備を中心にまとめる。 */
+#start-screen .start-card { margin-block: 12px; padding: 20px; }
+#start-screen #start-setup { margin-top: 0; gap: 16px; }
+#start-screen #progress-panel { margin-block: 12px; padding: 14px; }
+#start-screen .player-menu { margin-top: 12px; }
+#start-screen #equipped-summary { margin-block: 6px; }
+#start-screen .reset-data-controls { margin-top: 16px; padding-top: 12px; }
+#start-screen #nickname-status:empty, #start-screen #start-equipment-status:empty, #start-screen #reset-status:empty { display: none; }
+.shop-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+#shop-help-dialog { width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); box-sizing: border-box; padding: 22px; overflow-y: auto; border: 1px solid #dec18a; border-radius: 14px; background: #14262b; color: #f1eee2; }
+#shop-help-dialog::backdrop { background: #071418d9; }
+.shop-help-header { gap: 16px; margin-bottom: 18px; }
+.shop-help-header h2 { margin: 0; color: #dec18a; font-size: 20px; }
+#shop-help-dialog p, #shop-help-dialog li { font-size: 14px; line-height: 1.8; }
+#shop-help-dialog ul { list-style: disc; padding-left: 22px; }
+#shop-help-dialog li { margin-bottom: 8px; }
+#shop-help-dialog h3 { font-size: 16px; margin: 22px 0 10px; color: #dec18a; }
+#shop-help-dialog table { width: 100%; }
+#shop-help-dialog th, #shop-help-dialog td { padding: 9px 7px; white-space: nowrap; }
+@media (max-width: 600px) {
+  #start-screen .start-card { padding: 16px; }
+  #start-screen #start-setup { gap: 10px; }
+  #shop-help-dialog { padding: 16px; }
+  .shop-header-actions button { padding: 8px; }
+}
+
+/* ショップ上部は占い師と装備操作を並べ、説明はヘルプにまとめる。 */
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+#shop-screen { --shop-character-width: 230px; --shop-character-height: 340px; }
+#shop-screen .shop-header { justify-content: flex-end; margin-bottom: 12px; }
+#shop-screen .shop-keeper { display: grid; grid-template-columns: minmax(0, var(--shop-character-width)) minmax(0, 1fr); gap: 20px; align-items: start; padding: 0; border: 0; background: none; margin-block: 12px 20px; }
+#shop-screen .shop-keeper-image, #shop-screen .shop-category-character img { width: 100%; max-width: var(--shop-character-width); height: var(--shop-character-height); object-fit: contain; margin-inline: auto; }
+#shop-screen .shop-category-panel { grid-template-columns: minmax(0, var(--shop-character-width)) minmax(0, 1fr); }
+.shop-loadout { min-width: 0; }
+#shop-screen .shop-loadout .balance-display { margin: 0 0 8px; }
+#shop-screen .shop-loadout #shop-equipment { margin: 0 0 8px; font-weight: bold; }
+#shop-screen .shop-loadout .slot-legend { gap: 10px; }
+#shop-screen .shop-loadout #progress-status:empty { display: none; }
+@media (max-width: 600px) {
+  #shop-screen { --shop-character-width: clamp(90px, 28vw, 160px); --shop-character-height: 240px; }
+  #shop-screen .shop-keeper { gap: 12px; }
+  #shop-screen .shop-category-panel { grid-template-columns: minmax(0, 1fr); }
+  #shop-screen .shop-loadout .equipment-slots { gap: 4px; }
+  #shop-screen .shop-loadout button.equipment-slot-group { padding: 7px 3px; }
+  #shop-screen .shop-loadout .equipment-slot-label { font-size: 12px; }
+}

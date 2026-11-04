@@ -165,13 +165,6 @@ const MatchUI= {
     document.getElementById('npc-preview-placeholder').hidden=Boolean(selected);
     if(selected){image.src=NPC_FULL_IMAGES[selected.id];image.alt=selected.name;}
     document.getElementById('npc-preview-name').textContent=selected?selected.name:twoPlayer?'ランダム':'NPCをランダムに選出';
-    const profile=selected?NPC_PROFILES[selected.id]:null;
-    document.getElementById('npc-traits').hidden=!twoPlayer;
-    document.getElementById('npc-style').textContent=profile?profile.style:'3人それぞれの打ち筋';
-    document.getElementById('npc-description').textContent=profile?profile.description:'速攻のスィリス、重なり重視のタオタオ、絵札と守備のカナデ。相手は対戦開始時に決まります。';
-    document.getElementById('npc-trait-list').replaceChildren(...(profile?profile.traits:[]).map(text=>{
-      const item=document.createElement('li');item.textContent=text;return item;
-    }));
   },
   hidePlayerScreens() {
     for(const name of ['shop','stats','achievements'])document.getElementById(name+'-screen').hidden=true;
@@ -389,9 +382,7 @@ const MatchUI= {
     this.renderEquipmentSlots('shop-equipment-slots',p,capacity);
     this.renderSkillPicker('start-skill-picker',p,capacity);
     this.renderSkillPicker('shop-skill-picker',p,capacity);
-    $('shop-equipment').textContent=`装備：${equipment}（${slots} / ${capacity}枠）`;
-    $('shop-slot-rule').textContent=`装備は合計${capacity}枠。軽：1枠・毎局1回／中：2枠・毎場1回／重：3枠・1ゲーム1回。`;
-    $('equipment-unlock').textContent=capacity===4?'全NPCの本気モードに単独勝利：装備枠が4に拡張されています。':'全NPCの本気モードに単独勝利すると、装備枠が3から4に増えます。';
+    $('shop-equipment').textContent=`${slots} / ${capacity}枠`;
     $('collection-summary').textContent='購入済みGS：'+collection;
     const achieved=NPCPool.entries.filter(npc=>p.achievements['npc-first:'+npc.id]).length;
     const additional=Progression.achievementDefinitions.filter(def=>p.achievements[def.id]).length;
@@ -483,18 +474,33 @@ const MatchUI= {
       document.getElementById('progress-status').textContent='';
       document.getElementById('player-count').value='2';
       document.getElementById('difficulty').value='easy';
-      document.getElementById('difficulty').onchange();
       document.getElementById('stats-count').value='';
       document.getElementById('stats-difficulty').value='';
       this.updateNPCSelection();this.renderRecords();
     }
     document.getElementById('reset-status').textContent=result.message;
   },
+  openShopHelp() {
+    const dialog=document.getElementById('shop-help-dialog');
+    if(!dialog.open)dialog.showModal();
+  },
+  closeShopHelp() {
+    document.getElementById('shop-help-dialog').close();
+    const button=document.getElementById('shop-help');if(typeof button.focus==='function')button.focus();
+  },
   bind() {
     const difficulty=document.getElementById('difficulty');
     if(!['easy','normal'].includes(difficulty.value))difficulty.value='easy';
-    difficulty.onchange=()=>{document.getElementById('difficulty-description').textContent=difficulty.value==='easy'?'ノーマル：打牌のミスが多く、CPUはリーチを宣言しません。':'本気：キャラクターごとの打ち筋で役・点数・守備を考えます。';};
     PlayerRecords.load();
+    const help=document.getElementById('shop-help-dialog');
+    document.getElementById('shop-help').onclick=()=>this.openShopHelp();
+    document.getElementById('close-shop-help').onclick=()=>this.closeShopHelp();
+    help.oncancel=event=>{event.preventDefault();this.closeShopHelp();};
+    help.onclick=event=>{
+      if(event.target!==help)return;
+      const rect=help.getBoundingClientRect();
+      if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)this.closeShopHelp();
+    };
     document.getElementById('reset-data').onclick=()=>this.resetData();
     const categories=Object.keys(this.shopCategories);
     categories.forEach((category,index)=>{

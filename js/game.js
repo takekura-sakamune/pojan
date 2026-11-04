@@ -17,7 +17,10 @@ const GameManager= {
     this.startHand();
   },
   startHand() {
-    if(typeof document!=='undefined')UIManager.clearMotion();
+    if(typeof document!=='undefined'){
+      UIManager.clearMotion();
+      UIManager.unlockTableLayout();
+    }
     const s=gameState;
     GemSkillEngine.resetHand(s);
     s.deck=DeckManager.shuffle(CardManager.create());

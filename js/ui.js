@@ -49,6 +49,53 @@ const UIManager= {
     label.append(image);return label;
   },
   gsMotion:null,
+  tableLayoutLock:null,
+  lockSideResultLayout() {
+    const s=gameState;
+    if(this.tableLayoutLock?.state===s)return;
+    if(typeof window==='undefined')return;
+    const table=document.getElementById('table');
+    const rows=window.getComputedStyle(table).gridTemplateRows;
+    if(!rows||rows==='none')return;
+    const frames=['npc-area-2','player-area'].map(id=>document.getElementById(id));
+    const heights=frames.map(frame=>frame.getBoundingClientRect().height);
+    if(heights.some(height=>!height))return;
+    // 正面と中央の行を固定し、下段は操作ボタンの高さに合わせて伸ばす。
+    this.tableLayoutLock={state:s,rows:table.style.gridTemplateRows,
+      paddingBottom:table.style.paddingBottom,basePadding:parseFloat(window.getComputedStyle(table).paddingBottom)||0,extraPadding:0,
+      frames:frames.map(frame=>({frame,height:frame.style.height,minHeight:frame.style.minHeight}))};
+    const rowSizes=rows.trim().split(/\s+/);
+    table.style.gridTemplateRows=rowSizes.map((size,i)=>i<2?size:'auto').join(' ');
+    frames[0].style.height=heights[0]+'px';
+    frames[1].style.minHeight=heights[1]+'px';
+  },
+  unlockTableLayout() {
+    const lock=this.tableLayoutLock;if(!lock)return;
+    document.getElementById('table').style.gridTemplateRows=lock.rows||'';
+    document.getElementById('table').style.paddingBottom=lock.paddingBottom||'';
+    for(const {frame,height,minHeight} of lock.frames){frame.style.height=height||'';frame.style.minHeight=minHeight||'';}
+    this.tableLayoutLock=null;
+  },
+  fitSideResultOverflow() {
+    const lock=this.tableLayoutLock;if(!lock||lock.state!==gameState)return;
+    const table=document.getElementById('table'),rect=table.getBoundingClientRect();
+    const baseBottom=rect.top+rect.height-lock.extraPadding;
+    const bottom=Math.max(...[1,3].map(i=>{
+      const side=this.npcElement('npc-area',i).getBoundingClientRect();return side.top+side.height;
+    }));
+    const extra=Math.max(0,Math.ceil(bottom-baseBottom));
+    // 下側にだけ余白を足すため、中央列の席は移動せず左右枠も切れない。
+    table.style.paddingBottom=(lock.basePadding+extra)+'px';lock.extraPadding=extra;
+  },
+  positionMotionCard(ghost,layout) {
+    // Gridの中央揃えと論理insetを持ち出すと、fixed要素が画面中央へずれる。
+    // 見た目のコピー後に配置を初期化し、viewport座標だけで置く。
+    Object.assign(ghost.style,{
+      inset:'auto',insetBlock:'auto',insetInline:'auto',
+      alignSelf:'auto',justifySelf:'auto',
+      ...layout
+    });
+  },
   gsLocations() {
     const s=gameState,map=new Map();
     const add=(cards,zone)=>cards.forEach((card,index)=>map.set(card.id,{card:{...card},zone,index}));
@@ -102,7 +149,7 @@ const UIManager= {
       const fromX=source.left+(source.width-width)/2,fromY=source.top+(source.height-height)/2;
       const toX=destination.left+(destination.width-width)/2,toY=destination.top+(destination.height-height)/2;
       ghost.className+=' motion-card';ghost.setAttribute('aria-hidden','true');ghost.setAttribute('tabindex','-1');
-      Object.assign(ghost.style,{position:'fixed',left:fromX+'px',top:fromY+'px',width:width+'px',height:height+'px',margin:'0',pointerEvents:'none',zIndex:'1000',transform:'none'});
+      this.positionMotionCard(ghost,{position:'fixed',left:fromX+'px',top:fromY+'px',width:width+'px',height:height+'px',margin:'0',pointerEvents:'none',zIndex:'1000',transform:'none'});
       document.body.append(ghost);this.motionNodes.add(ghost);
       const animation=ghost.animate([{transform:'translate(0, 0)',opacity:1},{transform:`translate(${toX-fromX}px, ${toY-fromY}px)`,opacity:after.zone==='deck'?0:1}],{duration:360,easing:'cubic-bezier(.2,.8,.2,1)'});
       if(target&&after.zone!=='deck')target.animate([{opacity:0},{opacity:0}],{duration:360});
@@ -149,7 +196,7 @@ const UIManager= {
       const dx=discard?direction[0]*65:Math.max(-100,Math.min(100,center.left+center.width/2-rect.left-rect.width/2));
       const dy=discard?direction[1]*65:Math.max(-100,Math.min(100,center.top+center.height/2-rect.top-rect.height/2));
       ghost.className+=' motion-card';ghost.setAttribute('aria-hidden','true');ghost.setAttribute('tabindex','-1');
-      Object.assign(ghost.style,{position:'fixed',left:(rect.left+rect.width/2-card.offsetWidth/2)+'px',top:(rect.top+rect.height/2-card.offsetHeight/2)+'px',width:card.offsetWidth+'px',height:card.offsetHeight+'px',boxSizing:'border-box',margin:'0',pointerEvents:'none',zIndex:'1000'});
+      this.positionMotionCard(ghost,{position:'fixed',left:(rect.left+rect.width/2-card.offsetWidth/2)+'px',top:(rect.top+rect.height/2-card.offsetHeight/2)+'px',width:card.offsetWidth+'px',height:card.offsetHeight+'px',boxSizing:'border-box',margin:'0',pointerEvents:'none',zIndex:'1000'});
       document.body.append(ghost);this.motionNodes.add(ghost);
       const duration=discard?300:360;
       const animation=ghost.animate([
@@ -316,15 +363,38 @@ const UIManager= {
     points.textContent=r.transfers.map(t=>`${s.players[t.from].name} → ${s.players[t.to].name} ${t.amount}点`).join('、');
     panel.append(points);
   },
+  renderCenterCards() {
+    const s=gameState,root=document.getElementById('center-cards');
+    root.hidden=s.playerCount!==4;
+    if(root.hidden)return;
+    // ドラは表示専用。山札のカードを取り出したり、中身を公開したりしない。
+    const dora=this.card({id:'dora-display',number:s.doraNumber,isFaceCard:true,baseSuit:null});
+    dora.setAttribute('aria-label',`ドラ：${SUITS[s.currentSuit][1]} ${s.doraNumber}`);
+    document.getElementById('center-dora').replaceChildren(dora);
+    const deck=document.getElementById('center-deck'),count=s.deck.length;
+    document.getElementById('center-deck-label').textContent=`山札 ${count}枚`;
+    deck.setAttribute('role','img');deck.setAttribute('aria-label',`残り山札${count}枚`);
+    const backs=[];
+    for(let i=0;i<Math.min(6,count);i++){
+      const back=document.createElement('div');back.className='card back';back.textContent='宝';
+      back.setAttribute('aria-hidden','true');back.style.left=(i*3)+'px';back.style.top=((5-i)*2)+'px';backs.push(back);
+    }
+    deck.replaceChildren(...backs);
+  },
   render() {
     const s=gameState,
     $=id=>document.getElementById(id);
+    const sideWin=s.playerCount===4&&s.phase==='ended'&&s.result&&
+      s.result.type!=='draw'&&[1,3].includes(s.result.winner);
+    if(sideWin)this.lockSideResultLayout();
     $('table').className='table-board players-'+s.playerCount;
+    if(this.tableLayoutLock?.state===s)$('table').className+=' side-result-locked';
     $('info').replaceChildren(...[`${roundName(s.roundNumber)} / 第${s.handNumber}局 / 第${s.turnNumber}巡`, `親：${s.players[s.dealerIndex].name}`, `ドラ：${s.doraNumber}`, `山札：${s.deck.length}枚`].map(text=> {
       const span=document.createElement('span');span.className='pill';span.textContent=text;return span;
     }));
     $('info').children[0].replaceChildren(this.roundLabel(s.roundNumber),document.createTextNode(` / 第${s.handNumber}局 / 第${s.turnNumber}巡`));
     const difficulty=document.createElement('span');difficulty.className='pill';difficulty.textContent='CPU：'+(s.difficulty==='easy'?'ノーマル':'本気');$('info').append(difficulty);
+    this.renderCenterCards();
     for(let index=1;index<=3;index++) {
       const area=this.npcElement('npc-area',index);
       area.hidden=index>=s.playerCount;
@@ -380,6 +450,7 @@ const UIManager= {
       return d;
     }));
     GemSkillEngine.render();
+    this.fitSideResultOverflow();
     this.playMotion();
   }
 };

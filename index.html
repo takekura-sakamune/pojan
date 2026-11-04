@@ -10,11 +10,9 @@
   <body>
     <main id="start-screen">
       <section class="start-card">
-        <span class="eyebrow">1人で遊ぶ · NPC対戦</span>
         <div id="start-setup">
           <div id="start-controls">
             <h1>宝雀</h1>
-            <p class="muted">ポージャン β — 4つの場を巡る宝石の対局</p>
             <form id="nickname-form">
               <label for="player-nickname">ニックネーム</label>
               <div class="nickname-row">
@@ -30,20 +28,14 @@
               <option value="4">4人対戦（NPC 3人）</option>
             </select>
             <label for="difficulty">CPUの難易度</label>
-            <select id="difficulty" aria-describedby="difficulty-description">
+            <select id="difficulty">
               <option value="easy" selected>ノーマル</option>
               <option value="normal">本気</option>
             </select>
-            <p id="difficulty-description" class="muted">ノーマル：打牌のミスが多く、CPUはリーチを宣言しません。</p>
             <fieldset id="npc-selection">
               <legend>対戦するNPC</legend>
               <div id="npc-options" role="group" aria-label="対戦するNPCを選択"></div>
             </fieldset>
-            <div id="npc-traits" aria-live="polite">
-              <h2 id="npc-style"></h2>
-              <p id="npc-description"></p>
-              <ul id="npc-trait-list"></ul>
-            </div>
           </div>
           <div id="npc-preview-column">
           <figure id="npc-preview">
@@ -54,8 +46,6 @@
           <button id="start-game" type="button">対戦を始める</button>
           </div>
         </div>
-        <p>同じ相手と第四場まで対戦します。人数にかかわらず全員25000点で開始し、持ち点は第四場まで引き継ぎます。誰かが0点以下になると、その時点で対戦終了です。3人・4人対戦はNPCを重複なしでランダムに選びます。</p>
-        <p class="start-rules">対戦終了時の所持点が多い順に順位を決定します。同じ所持点の場合は同順位です。</p>
         <section id="progress-panel" aria-label="プレイヤーメニュー">
           <p id="gp-balance"></p>
           <p id="equipped-summary"></p>
@@ -81,29 +71,22 @@
     </main>
     <main id="shop-screen" class="player-screen" aria-labelledby="shop-title" hidden>
       <section class="start-card">
-        <header class="player-screen-header"><h1 id="shop-title" tabindex="-1">ショップ</h1><button id="shop-back" type="button">開始画面へ戻る</button></header>
+        <header class="player-screen-header shop-header"><h1 id="shop-title" class="visually-hidden" tabindex="-1">ショップ</h1><div class="shop-header-actions"><button id="shop-help" type="button" aria-haspopup="dialog" aria-controls="shop-help-dialog">ヘルプ</button><button id="shop-back" type="button">開始画面へ戻る</button></div></header>
         <div class="shop-keeper">
           <img id="shop-keeper-image" src="picture/shop.png" alt="ジェムスキルを販売する占い師" class="shop-keeper-image" draggable="false">
-          <div>
-            <span class="eyebrow">占い師のショップ</span>
-            <p class="shop-greeting">あなたの運命を変える力を、選んでいきなさい。</p>
+          <div class="shop-loadout">
             <p id="shop-balance" class="balance-display"></p>
-            <p>ジェムポイント（GP）でジェムスキル（GS）を購入できます。必要GPは軽100・中200・重300です。</p>
+            <p id="shop-equipment"></p>
+            <div class="slot-legend" aria-label="装備枠の色とGSの種類">
+              <span class="slot-legend-item slot-stock">山札</span>
+              <span class="slot-legend-item slot-hand">手札</span>
+              <span class="slot-legend-item slot-wisdom">情報</span>
+            </div>
+            <div id="shop-equipment-slots" class="equipment-slots"></div>
+            <details id="shop-equipment-editor" open><summary>購入済みGSから付け替える</summary><div id="shop-skill-picker"></div></details>
+            <p id="progress-status" role="status" aria-live="polite"></p>
           </div>
         </div>
-        <p>順位報酬：2人対戦100 GP／3人対戦200・100 GP／4人対戦300・200・100 GP。本気モードは順位報酬が2倍です。各NPCへの初勝利は追加300 GP。</p>
-        <p id="shop-slot-rule">装備は合計3枠。軽：1枠・毎局1回／中：2枠・毎場1回／重：3枠・1ゲーム1回。</p>
-        <p id="equipment-unlock"></p>
-        <p class="muted">GSは自分のツモ前に使用します。リーチ中は使用できません。</p>
-        <p id="shop-equipment"></p>
-        <div class="slot-legend" aria-label="装備枠の色とGSの種類">
-            <span class="slot-legend-item slot-stock">山札（水色）</span>
-            <span class="slot-legend-item slot-hand">手札（オレンジ）</span>
-            <span class="slot-legend-item slot-wisdom">情報（紫）</span>
-          </div>
-        <div id="shop-equipment-slots" class="equipment-slots"></div>
-        <details id="shop-equipment-editor" open><summary>購入済みGSから付け替える</summary><div id="shop-skill-picker"></div></details>
-        <p id="progress-status" role="status" aria-live="polite"></p>
         <div class="shop-tabs" role="tablist" aria-label="GSの種類">
           <button id="shop-tab-hand" type="button" role="tab" aria-selected="true" aria-controls="shop-category-panel" tabindex="0">手札</button>
           <button id="shop-tab-stock" type="button" role="tab" aria-selected="false" aria-controls="shop-category-panel" tabindex="-1">山札</button>
@@ -192,6 +175,10 @@
       </section>
       <div id="center">
         <div id="info"></div>
+        <div id="center-cards" hidden>
+          <div class="center-card-group"><span>ドラ</span><div id="center-dora"></div></div>
+          <div class="center-card-group"><span id="center-deck-label"></span><div id="center-deck" class="deck-stack"></div></div>
+        </div>
       </div>
       <section id="player-area">
         <div id="player-content">
@@ -203,12 +190,14 @@
               </select>
             </label>
           </div>
-          <div id="playerHand" class="row"></div>
+          <div class="player-hand-row">
+            <div id="playerHand" class="row"></div>
+            <div id="actions" class="row" role="group" aria-label="プレイヤー操作"></div>
+          </div>
           <p id="riichi-waits" aria-live="polite" hidden></p>
           <div id="playerWin" class="win-panel"></div>
           <div id="playerDiscards" class="row discards" aria-label="あなたの捨て札"></div>
         </div>
-        <div id="actions" class="row" role="group" aria-label="プレイヤー操作"></div>
       </section>
       <section id="gs-game" aria-label="ジェムスキル操作" aria-live="polite" hidden></section>
       </div>
@@ -269,6 +258,34 @@
         <button id="return-start" type="button">開始画面へ</button>
       </section>
     </main>
+    <dialog id="shop-help-dialog" aria-labelledby="shop-help-title">
+      <header class="shop-help-header"><h2 id="shop-help-title">GPの獲得方法</h2><button id="close-shop-help" type="button" autofocus>閉じる</button></header>
+      <p>新規開始・データ初期化時の所持GPは100です。</p>
+      <h3>GSの購入と装備</h3>
+      <p>必要GPは軽100・中200・重300です。装備は初期3枠で、軽は1枠・毎局1回、中は2枠・毎場1回、重は3枠・1ゲーム1回使えます。本気モードで全NPCに単独勝利すると装備上限が4枠に増えます。</p>
+      <p>GSは自分のツモ前に使用します。リーチ中は使用できません。</p>
+      <h3>対戦の順位報酬</h3>
+      <p>本気モードでは、下表の順位報酬が2倍になります。</p>
+      <div class="record-table-wrap"><table>
+        <thead><tr><th scope="col">人数</th><th scope="col">1位</th><th scope="col">2位</th><th scope="col">3位</th><th scope="col">4位</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">2人</th><td>100 GP</td><td>0 GP</td><td>―</td><td>―</td></tr>
+          <tr><th scope="row">3人</th><td>200 GP</td><td>100 GP</td><td>0 GP</td><td>―</td></tr>
+          <tr><th scope="row">4人</th><td>300 GP</td><td>200 GP</td><td>100 GP</td><td>0 GP</td></tr>
+        </tbody>
+      </table></div>
+      <p>第四場終了、または誰かの持ち点が0以下になって終了した対戦が対象です。途中で開始画面へ戻ると報酬はありません。</p>
+      <p>2人対戦は単独1位のみ対象です。3・4人対戦で同順位になった場合は、その順位の報酬を獲得します。</p>
+      <h3>実績・初勝利ボーナス</h3>
+      <ul>
+        <li>各NPCへの初単独勝利：300 GP（2人対戦・難易度共通）</li>
+        <li>対戦を1回完了：100 GP／10回完了：300 GP／100回完了：500 GP（勝敗不問）</li>
+        <li>本気モードで各NPCに初単独勝利：それぞれ500 GP</li>
+        <li>本気モードで全NPCに単独勝利：追加500 GP＋GS装備枠が4に拡張</li>
+      </ul>
+      <p>実績・初勝利ボーナスは各1回の固定額です。本気モードの2倍対象には含みません。条件を同時に達成した場合は合算します。</p>
+      <p>3・4人対戦で本気モードの単独1位になると、参加していた全NPCへの勝利として記録します。達成状況は実績画面、獲得の内訳はGP履歴で確認できます。</p>
+    </dialog>
     <dialog id="portrait-dialog" aria-labelledby="portrait-title">
       <div class="portrait-dialog-header">
         <h2 id="portrait-title"></h2>
