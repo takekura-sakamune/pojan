@@ -184,7 +184,7 @@
 }
 #table .npc-area.seat-west [id] .card { transform: rotate(90deg); }
 #table .npc-area.seat-east [id] .card { transform: rotate(-90deg); }
-#game-navigation { display: flex; justify-content: center; padding: 14px 0 5px; }
+#game-navigation { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 12px; padding: 14px 0 5px; }
 #leave-game { background: #293e40; color: #f1e3bf; font-size: 12px; }
 @media (max-width: 720px) {
   #table .npc-area:is(.seat-west, .seat-east) [id^="npcHand"] {
@@ -267,7 +267,7 @@
 #start-setup { margin-top: 8px; }
 #start-controls h1 { margin: 0; white-space: nowrap; }
 .start-title-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-.start-title-row a { color: #f1d495; font-size: 12px; white-space: nowrap; text-underline-offset: 3px; }
+.start-title-row a, #game-navigation a { color: #f1d495; font-size: 12px; white-space: nowrap; text-underline-offset: 3px; }
 @media (max-width: 600px) {
   #start-controls .start-title-row h1 { font-size: 28px; }
 }
