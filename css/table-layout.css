@@ -265,7 +265,12 @@
 
 /* タイトルとプレビューを同じグリッド行の上端で揃える。 */
 #start-setup { margin-top: 8px; }
-#start-controls h1 { margin: 0 0 6px; }
+#start-controls h1 { margin: 0; white-space: nowrap; }
+.start-title-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.start-title-row a { color: #f1d495; font-size: 12px; white-space: nowrap; text-underline-offset: 3px; }
+@media (max-width: 600px) {
+  #start-controls .start-title-row h1 { font-size: 28px; }
+}
 #start-controls > .muted { margin: 0 0 18px; }
 #npc-preview-image { object-position: center top; }
 
