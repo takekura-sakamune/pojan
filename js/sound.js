@@ -7,6 +7,45 @@ const SoundManager= {
   volume:0.75,
   pending:null,
   primedContext:null,
+  paperBuffer:null,
+  tone(frequency,time,duration,type='sine',volume=0.24,slide=null) {
+    const ctx=this.context;
+    if(!ctx||!this.master)return;
+    const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+    oscillator.type=type;
+    oscillator.frequency.setValueAtTime(frequency,time);
+    if(slide)oscillator.frequency.exponentialRampToValueAtTime(slide,time+duration);
+    gain.gain.setValueAtTime(0,time);
+    gain.gain.linearRampToValueAtTime(volume,time+.012);
+    gain.gain.exponentialRampToValueAtTime(.001,time+duration);
+    oscillator.connect(gain);gain.connect(this.master);
+    oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
+    oscillator.start(time);oscillator.stop(time+duration+.025);
+  },
+  paper(time,duration=.17,strength=.5) {
+    const ctx=this.context;
+    if(!ctx||!this.master)return;
+    // Keep a tonal fallback for older audio implementations without noise buffers.
+    if(typeof ctx.createBuffer!=='function'||typeof ctx.createBufferSource!=='function'||typeof ctx.createBiquadFilter!=='function'){
+      this.tone(720,time,duration,'sine',.06,280);return;
+    }
+    if(!this.paperBuffer){
+      this.paperBuffer=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*.4),ctx.sampleRate);
+      const samples=this.paperBuffer.getChannelData(0);
+      for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
+    }
+    const source=ctx.createBufferSource(),high=ctx.createBiquadFilter(),low=ctx.createBiquadFilter(),gain=ctx.createGain();
+    source.buffer=this.paperBuffer;source.playbackRate.value=.9+Math.random()*.2;
+    high.type='highpass';high.frequency.value=750;
+    low.type='lowpass';low.frequency.setValueAtTime(6500,time);low.frequency.exponentialRampToValueAtTime(2400,time+duration);
+    gain.gain.setValueAtTime(0,time);gain.gain.linearRampToValueAtTime(strength,time+.018);
+    gain.gain.linearRampToValueAtTime(strength*.22,time+duration*.42);
+    gain.gain.linearRampToValueAtTime(strength*.65,time+duration*.59);
+    gain.gain.exponentialRampToValueAtTime(.001,time+duration);
+    source.connect(high);high.connect(low);low.connect(gain);gain.connect(this.master);
+    source.onended=()=>{source.disconnect();high.disconnect();low.disconnect();gain.disconnect();};
+    source.start(time,Math.random()*.08,duration);source.stop(time+duration+.02);
+  },
   unlock() {
     if(typeof window==='undefined')return;
     try {
@@ -43,55 +82,47 @@ const SoundManager= {
     if(ctx!==this.context||ctx.state!=='running')return;
     const pending=this.pending;
     this.pending=null;
-    if(pending&&pending.context===ctx&&Date.now()-pending.at<1000)this.play(pending.event);
+    if(pending&&pending.context===ctx&&Date.now()-pending.at<1000)this.play(pending.event,pending.options);
   },
   update() {
     if(this.master)this.master.gain.setTargetAtTime(this.enabled?this.volume:0, this.context.currentTime, 0.015);
   },
-  play(event) {
+  play(event,options={}) {
     const ctx=this.context;
     if(!this.enabled||!this.volume||!ctx)return;
     if(ctx.state!=='running') {
       // Retain only the latest sound briefly; never replay a backlog after returning.
-      this.pending={event,at:Date.now(),context:ctx};
+      const includeStart=event==='dealSequence'&&this.pending?.event==='start';
+      this.pending={event,options:{...options,includeStart:options.includeStart||includeStart},at:Date.now(),context:ctx};
       this.unlock();
       return;
     }
-    const patterns= {
-      draw:[[620, 0, .07, 880, .13]],
-      discard:[[240, 0, .065, 110, .22]],
-      select:[[920, 0, .035, 1100, .05]],
-      tsumo:[[523, 0, .13, 523, .15], [659, .10, .14, 659, .15], [784, .20, .16, 784, .15], [1047, .33, .30, 1047, .17]],
-      ron:[[330, 0, .09, 440, .20], [660, .09, .12, 880, .19], [988, .20, .30, 988, .18]],
-      drawEnd:[[440, 0, .16, 392, .11], [330, .18, .25, 294, .10]],
-      start:[[440, 0, .09, 440, .09], [660, .10, .13, 660, .10]]
-    };
     try {
-      for(const [hz, delay, duration, end, level] of patterns[event]||[]) {
-        const o=ctx.createOscillator(),
-        g=ctx.createGain(),
-        t=ctx.currentTime+delay;
-        o.type=['discard', 'ron'].includes(event)?'triangle':'sine';
-        o.frequency.setValueAtTime(hz, t);
-        o.frequency.exponentialRampToValueAtTime(end, t+duration);
-        g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(level, t+.006);
-        g.gain.exponentialRampToValueAtTime(.0001, t+duration);
-        o.connect(g);
-        g.connect(this.master);
-        o.onended=()=> {
-          o.disconnect();
-          g.disconnect();
-        };
-        o.start(t);
-        o.stop(t+duration+.02);
+      const t=ctx.currentTime+.01;
+      const notes=(sequence,step=.09,duration=.25)=>sequence.forEach((hz,index)=>this.tone(hz,t+index*step,duration,'sine',.24));
+      if(event==='dealSequence'){
+        if(options.includeStart)notes([262,392,523],.1,.3);
+        const count=Math.max(0,Number(options.count)||0),interval=Math.max(.04,Number(options.interval)||.07);
+        for(let i=0;i<count;i++)this.paper(t+i*interval,.095,.2);
       }
+      else if(event==='draw'||event==='deal')this.paper(t,.14,.22);
+      else if(event==='discard')this.paper(t,.16,.18);
+      else if(event==='select')this.tone(920,t,.035,'sine',.05,1100);
+      else if(event==='tsumo')notes([523,659,784,1046],.13,.55);
+      else if(event==='ron')notes([880,1175],.07,.22);
+      else if(event==='drawEnd')notes([392,523,392],.14,.4);
+      else if(event==='start')notes([262,392,523],.1,.3);
     }
     catch(_) {}
   },
   bind() {
     const toggle=document.getElementById('sound-toggle'),
     volume=document.getElementById('sound-volume');
+    try {
+      const saved=localStorage.getItem('pojan-sound-volume');
+      if(saved!==null&&Number.isFinite(Number(saved)))this.volume=Math.min(1,Math.max(0,Number(saved)));
+    }catch(_) {}
+    volume.value=String(Math.round(this.volume*100));
     document.addEventListener('pointerdown', ()=>this.unlock(), {
       capture:true
     });
@@ -115,6 +146,7 @@ const SoundManager= {
     volume.oninput=()=> {
       this.unlock();
       this.volume=Number(volume.value)/100;
+      try{localStorage.setItem('pojan-sound-volume',String(this.volume));}catch(_){}
       this.update();
     };
     volume.onchange=()=>this.play('select');

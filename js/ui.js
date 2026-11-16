@@ -166,6 +166,8 @@ const UIManager= {
     const s=gameState,events=s.visualEvents||[];
     s.visualEvents=[];
     this.playGSMotion(events);
+    const dealCount=events.filter(event=>event.type==='deal').length;
+    if(dealCount)SoundManager.play('dealSequence',{count:dealCount,interval:.06});
     if(typeof window==='undefined'||(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches))return;
     for(const event of events) {
       const npc=event.player>0;
@@ -198,12 +200,13 @@ const UIManager= {
       ghost.className+=' motion-card';ghost.setAttribute('aria-hidden','true');ghost.setAttribute('tabindex','-1');
       this.positionMotionCard(ghost,{position:'fixed',left:(rect.left+rect.width/2-card.offsetWidth/2)+'px',top:(rect.top+rect.height/2-card.offsetHeight/2)+'px',width:card.offsetWidth+'px',height:card.offsetHeight+'px',boxSizing:'border-box',margin:'0',pointerEvents:'none',zIndex:'1000'});
       document.body.append(ghost);this.motionNodes.add(ghost);
-      const duration=discard?300:360;
+      const dealing=event.type==='deal';
+      const duration=discard?300:dealing?300:360;
       const animation=ghost.animate([
         {transform:`translate(${dx}px, ${dy}px) ${rotation} scale(${discard?1.15:.8})`,opacity:0},
         {opacity:1,offset:.2},
         {transform:`translate(0, 0) ${rotation} scale(1)`,opacity:1}
-      ],{duration,easing:'cubic-bezier(.2,.8,.2,1)'});
+      ],{duration,delay:dealing?event.dealIndex*42:0,easing:'cubic-bezier(.2,.8,.2,1)'});
       card.animate([{opacity:0},{opacity:0}],{duration});
       const cleanup=()=>{ghost.remove();this.motionNodes.delete(ghost);};
       animation.onfinish=cleanup;animation.oncancel=cleanup;

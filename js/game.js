@@ -32,7 +32,12 @@ const GameManager= {
       p.lastDrawnCard=null;
       p.riichi=false;
     });
-    for(let i=0; i<4; i++)s.players.forEach(p=>p.hand.push(s.deck.pop()));
+    const dealEvents=[];
+    for(let i=0; i<4; i++)s.players.forEach((p,player)=>{
+      const card=s.deck.pop();
+      p.hand.push(card);
+      dealEvents.push({type:'deal',player,cardId:card.id,dealIndex:dealEvents.length});
+    });
     s.discardPiles=s.players.map(()=>[]);
     s.drawCount=0;
     s.turnNumber=1;
@@ -41,7 +46,7 @@ const GameManager= {
     s.pending=null;
     s.ronCandidates=[];
     s.result=null;
-    s.visualEvents=[];
+    s.visualEvents=dealEvents;
     s.roundOver=false;
     s.activeRole=null;
     s.players.forEach(p=>p.npcLines=[]);
