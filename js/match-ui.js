@@ -387,13 +387,17 @@ const MatchUI= {
     const achieved=NPCPool.entries.filter(npc=>p.achievements['npc-first:'+npc.id]).length;
     const additional=Progression.achievementDefinitions.filter(def=>p.achievements[def.id]).length;
     $('achievement-summary').textContent=`実績：${achieved+additional} / ${NPCPool.entries.length+Progression.achievementDefinitions.length}達成`;
-    $('reward-achievements').replaceChildren(...Progression.achievementDefinitions.map(def=>{
+    const renderAchievement=def=>{
       const el=document.createElement('article'),title=document.createElement('h3'),status=document.createElement('p');
       const unlocked=Boolean(p.achievements[def.id]),progress=Progression.achievementProgress(def,PlayerRecords.records);
       el.className='achievement-card'+(unlocked?' achieved':'');title.textContent=def.name;
       status.textContent=`${unlocked?'達成済み':`${Math.min(progress.value,progress.target)} / ${progress.target}`} ／ ${def.reward} GP`+(def.id==='hard-all'?' ＋ 装備枠4に拡張':'');
-      el.append(title,status);return el;
-    }));
+      el.append(title);
+      if(def.description){const condition=document.createElement('p');condition.className='achievement-condition';condition.textContent=def.description;el.append(condition);}
+      el.append(status);return el;
+    };
+    $('reward-achievements').replaceChildren(...Progression.achievementDefinitions.filter(def=>!def.collection).map(renderAchievement));
+    $('collection-achievements').replaceChildren(...Progression.achievementDefinitions.filter(def=>def.collection).map(renderAchievement));
     $('gp-transactions').replaceChildren(...p.transactions.slice().reverse().map(t=>{const row=document.createElement('p');row.textContent=`${t.label}：${t.amount>=0?'+':''}${t.amount} GP`;return row;}));
     if(!p.transactions.length)$('gp-transactions').textContent='GPの獲得・購入履歴はまだありません。';
     const lines=[`総対戦回数：${s.matches}`,`勝利数：2人 ${s.winsByCount[2]} ／ 3人 ${s.winsByCount[3]} ／ 4人 ${s.winsByCount[4]}`,`最大所持点：${s.highest===null?'記録なし':s.highest+'点'}`];

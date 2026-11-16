@@ -36,21 +36,33 @@ const Progression={
     {id:'matches-1',name:'はじめの一戦',reward:100,target:1},
     {id:'matches-10',name:'十戦の歩み',reward:300,target:10},
     {id:'matches-100',name:'百戦の歩み',reward:500,target:100},
-    {id:'hard-sylis',name:'本気のスィリスに初単独勝利',reward:500,category:'手札'},
-    {id:'hard-taotao',name:'本気のタオタオに初単独勝利',reward:500,category:'山札'},
-    {id:'hard-kanade',name:'本気のカナデに初単独勝利',reward:500,category:'情報'},
-    {id:'hard-all',name:'本気の全NPCに単独勝利',reward:500}
+    {id:'hard-sylis',name:'退魔比丘尼を超えろ！',description:'スィリス（本気）に単独勝利',reward:500,category:'手札'},
+    {id:'hard-taotao',name:'キョンシー龍公主を超えろ！',description:'タオタオ（本気）に単独勝利',reward:500,category:'山札'},
+    {id:'hard-kanade',name:'サキュバス男装執事を超えろ！',description:'カナデ（本気）に単独勝利',reward:500,category:'情報'},
+    {id:'hard-all',name:'凱歌を歌え',description:'全NPCの本気モードに単独勝利',reward:500},
+    ...['手札','山札','情報'].flatMap((category,categoryIndex)=>['light','medium','heavy'].map((rank,rankIndex)=>({
+      id:`gs-collection-${categoryIndex}-${rank}`,name:{
+        手札:{light:'ハンドオブグローリーⅠ',medium:'ハンドオブグローリーⅡ',heavy:'ハンドオブグローリーⅢ'},
+        山札:{light:'因果超越Ⅰ',medium:'因果超越Ⅱ',heavy:'因果超越Ⅲ'},
+        情報:{light:'ノルンの寵愛Ⅰ',medium:'ノルンの寵愛Ⅱ',heavy:'ノルンの寵愛Ⅲ'}
+      }[category][rank],description:`${category}の${{light:'軽',medium:'中',heavy:'重'}[rank]}GSをすべて収集`,
+      reward:{light:100,medium:200,heavy:300}[rank],collection:{category,rank}
+    })))
   ],
-  achievementProgress(definition,records){
+  achievementProgress(definition,records,progress=PlayerRecords.progress){
     if(definition.target)return {value:new Set(records.map(r=>r.id)).size,target:definition.target};
+    if(definition.collection){
+      const skills=GemSkills.entries.filter(skill=>skill.category===definition.collection.category&&skill.rank===definition.collection.rank);
+      return {value:skills.filter(skill=>progress.unlocked.includes(skill.id)).length,target:skills.length};
+    }
     if(definition.category)return {value:this.heavyUnlocked(definition.category,records)?1:0,target:1};
     return {value:Object.keys(this.heavyRequirements).filter(category=>this.heavyUnlocked(category,records)).length,target:3};
   },
   unlockAchievements(records,p,at=new Date().toISOString()){
     const unlocked=[],parts=[];
     for(const definition of this.achievementDefinitions){
-      const progress=this.achievementProgress(definition,records);
-      if(p.achievements[definition.id]||progress.value<progress.target)continue;
+      const achievementProgress=this.achievementProgress(definition,records,p);
+      if(p.achievements[definition.id]||achievementProgress.value<achievementProgress.target)continue;
       const amount=this.credit(p,'achievement:'+definition.id,definition.reward,definition.name);
       p.achievements[definition.id]={unlockedAt:at};unlocked.push(definition.id);parts.push({label:definition.name,amount});
     }
@@ -104,7 +116,8 @@ const Progression={
     const next=JSON.parse(JSON.stringify(p));
     next.balance-=skill.price;next.unlocked.push(id);
     next.transactions.push({id:'purchase:'+id,amount:-skill.price,label:skill.name+'購入'});
-    return this.commit(next,skill.name+'を購入しました。');
+    const bonus=this.unlockAchievements(PlayerRecords.records,next).total;
+    return this.commit(next,skill.name+'を購入しました。'+(bonus?`実績達成！${bonus} GPを獲得しました。`:''));
   },
   setEquipment(ids){
     const p=PlayerRecords.progress;

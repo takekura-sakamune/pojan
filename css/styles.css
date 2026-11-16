@@ -951,8 +951,16 @@ td,th {
 .skill-card { display: flex; flex-wrap: wrap; align-content: space-between; }
 .skill-card p { width: 100%; }
 .achievement-card h3 { margin: 0; font-size: 16px; }
+.achievement-card p { margin: 5px 0 0; font-size: 12px; line-height: 1.4; }
 .achievement-card.achieved { border-color: #dec18a; }
 .achievement-card.achieved p { color: #dec18a; }
+#achievements-screen .start-card { padding: 14px 18px; }
+#achievements-screen .player-screen-header { margin-bottom: 8px; }
+#achievements-screen h2 { margin: 14px 0 4px; font-size: 17px; }
+#achievements-screen .start-card > p:not(.balance-display) { margin: 4px 0; font-size: 12px; }
+#achievements-screen .achievement-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 205px), 1fr)); gap: 7px; margin: 7px 0 12px; }
+#achievements-screen .achievement-card { padding: 9px 11px; border-radius: 8px; }
+#achievements-screen .achievement-card h3 { font-size: 13px; line-height: 1.35; }
 .stat-grid { display: grid; gap: 10px; }
 .stat-grid p { padding: 12px 16px; margin: 0; border-radius: 8px; background: #102529; }
 .player-screen .stats-filters label { flex: 1; min-width: 120px; }

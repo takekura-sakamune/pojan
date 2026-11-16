@@ -19,7 +19,7 @@ const GemSkillEngine={
   resetHand(s){this.transactions.delete(s);s.gsUsed=s.gsUsed||{};s.gsInfo=[];s.gsReveal={};s.gsChoice=null;s.gsFlow=null;s.gsCharge=false;s.gsKeep=null;},
   scope(skill,s){return skill.rank==='light'?`${s.roundNumber}:${s.handNumber}`:skill.rank==='medium'?String(s.roundNumber):'match';},
   available(id){const s=gameState,k=GemSkills.entries.find(k=>k.id===id);return Boolean(k&&s.skills.includes(id)&&s.phase==='draw'&&s.currentPlayerIndex===0&&!s.players[0].riichi&&!s.gsChoice&&!s.gsCharge&&s.players[0].hand.length===4&&s.gsUsed[id]!==this.scope(k,s));},
-  prompt(text,options){gameState.phase='skill';gameState.gsChoice={text,options};gameState.selected=null;GameManager.refresh();},
+  prompt(text,options,card=null){gameState.phase='skill';gameState.gsChoice={text,options,card:card?{...card}:null};gameState.selected=null;GameManager.refresh();},
   choose(index){const s=gameState,c=s.gsChoice;if(s.phase!=='skill'||!c||!Number.isInteger(index)||!c.options[index])return;this.captureMotion();s.gsChoice=null;c.options[index].run();},
   done(text=''){const s=gameState;s.gsChoice=null;s.phase='draw';if(text)s.gsInfo.push(text);s.message='GSの処理が終わりました。通常のツモへ進めます。';GameManager.refresh();},
   cards(text,cards,action){this.prompt(text,cards.map(c=>({label:this.label(c),card:{...c},run:()=>action(c)})));},
@@ -71,7 +71,7 @@ const GemSkillEngine={
       case 'rebirth':this.cards('山札の下へ戻す手札を選んでください。',p.hand,c=>{p.hand.splice(p.hand.indexOf(c),1);s.deck.unshift(c);p.hand.push(s.deck.pop());this.done();});break;
       case 'reverse':this.reorder(2);break;
       case 'fate':this.reorder(3);break;
-      case 'shatter':{const c=s.deck[s.deck.length-1];this.prompt('山札の先頭：'+this.label(c),[{label:'山札に戻す',run:()=>this.done()},{label:'捨てる（ロン判定あり）',run:()=>{this.add(s.deck.pop());this.discards('draw');TurnManager.discard(p.hand.indexOf(c));}}]);break;}
+      case 'shatter':{const c=s.deck[s.deck.length-1];this.prompt('山札の先頭カードをどうしますか？',[{label:'山札に戻す',run:()=>this.done()},{label:'捨てる（ロン判定あり）',run:()=>{this.add(s.deck.pop());this.discards('draw');TurnManager.discard(p.hand.indexOf(c));}}],c);break;}
       case 'luck':case 'favor':this.cards('引くカードを選んでください。',this.top(id==='luck'?2:5),c=>this.drawSequence(1,this.take(c)));break;
       case 'foresight':this.done('未来視（使用時点・次に引く順）：'+this.top(3).map(c=>this.label(c)).join(' ／ '));break;
       case 'convert':this.prompt('先頭カードのスートを選んでください。',CONFIG.suits.map(suit=>({label:SUITS[suit][1],card:{id:'gs-suit-'+suit,number:'?',baseSuit:suit,isFaceCard:false},run:()=>{s.deck[s.deck.length-1].gsSuit=suit;this.done();}})));break;
@@ -123,7 +123,9 @@ const GemSkillEngine={
     }
     const button=(label,run,disabled=false,skill=null)=>{const b=document.createElement('button');if(skill){b.className='gs-skill-use';b.append(GemSkills.iconNode(skill),document.createTextNode(label));}else b.textContent=label;b.disabled=disabled;b.onclick=run;nodes.push(b);};
     if(s.gsChoice){
-      text(s.gsChoice.text);const options=document.createElement('div');options.className='gs-options';
+      text(s.gsChoice.text);
+      if(s.gsChoice.card){const preview=UIManager.card(s.gsChoice.card);preview.classList.add('gs-choice-preview-card');preview.setAttribute('aria-label','選択中のカード：'+this.label(s.gsChoice.card));nodes.push(preview);}
+      const options=document.createElement('div');options.className='gs-options';
       // 表示順だけを整列し、選択処理には元の選択肢番号を渡す。
       const entries=s.gsChoice.options.map((o,i)=>({o,i}));
       const handIds=new Set(s.players[0].hand.map(c=>c.id));
