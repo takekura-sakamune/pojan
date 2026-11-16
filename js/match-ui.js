@@ -305,12 +305,12 @@ const MatchUI= {
   renderSkillPicker(id,p,capacity){
     const root=document.getElementById(id),nodes=[];
     const text=message=>{const el=document.createElement('p');el.textContent=message;nodes.push(el);};
-    const button=(label,action,disabled=false)=>{const el=document.createElement('button');el.textContent=label;el.type='button';el.disabled=disabled;el.onclick=action;return el;};
+    const button=(label,action,disabled=false,skill=null)=>{const el=document.createElement('button');if(skill)el.append(GemSkills.iconNode(skill),document.createTextNode(label));else el.textContent=label;el.type='button';el.disabled=disabled;el.onclick=action;return el;};
     text('装備枠のGSを押すと外せます。購入済みGSは種類をまたいで選べます。');
     if(!p.unlocked.length)text('購入済みのGSはまだありません。ショップで購入するとここに表示されます。');
     const list=document.createElement('div');list.className='owned-skill-list';
     for(const skill of GemSkills.entries.filter(k=>p.unlocked.includes(k.id))){
-      const equipped=p.equipped.includes(skill.id),b=button(`${skill.name}・${skill.slots}枠${equipped?'【装備中】':''}`,()=>this.changeEquipment(skill.id));
+      const equipped=p.equipped.includes(skill.id),b=button(`${skill.name}・${skill.slots}枠${equipped?'【装備中】':''}`,()=>this.changeEquipment(skill.id),false,skill);
       b.className='owned-skill slot-'+this.slotCategory(skill.category);b.setAttribute('aria-pressed',String(equipped));b.setAttribute('title',skill.effect);list.append(b);
     }
     nodes.push(list);
@@ -324,7 +324,7 @@ const MatchUI= {
       const choices=document.createElement('div');choices.className='equipment-replace-options';
       for(const skillId of p.equipped){
         const k=GemSkills.entries.find(k=>k.id===skillId),selected=swap.remove.includes(skillId);
-        const b=button(`${selected?'外す：':'残す：'}${k.name}（${k.slots}枠）`,()=>{swap.remove=selected?swap.remove.filter(k=>k!==skillId):[...swap.remove,skillId];this.renderProgress();});
+        const b=button(`${selected?'外す：':'残す：'}${k.name}（${k.slots}枠）`,()=>{swap.remove=selected?swap.remove.filter(k=>k!==skillId):[...swap.remove,skillId];this.renderProgress();},false,k);
         b.setAttribute('aria-pressed',String(selected));choices.append(b);
       }
       nodes.push(choices);
@@ -354,7 +354,7 @@ const MatchUI= {
       group.className='equipment-slot-group slot-'+this.slotCategory(skill.category);group.style.gridColumn=`span ${skill.slots}`;
       boxes.className='equipment-slot-boxes';
       for(let i=0;i<skill.slots;i++){const box=document.createElement('span');box.className='equipment-slot filled';box.textContent=String(used+i+1);box.setAttribute('aria-hidden','true');boxes.append(box);}
-      label.className='equipment-slot-label';label.textContent=`${skill.name}（${skill.category}・${skill.slots}枠）`;
+      label.className='equipment-slot-label';label.append(GemSkills.iconNode(skill),document.createTextNode(`${skill.name}（${skill.category}・${skill.slots}枠）`));
       group.append(boxes,label);groups.push(group);used+=skill.slots;
     }
     for(let i=used;i<capacity;i++){
@@ -426,8 +426,8 @@ const MatchUI= {
       :`重スキル：${requirement.name}の本気モードに単独1位で勝利すると表示されます。`;
     $('gs-catalog').replaceChildren(...GemSkills.entries.filter(skill=>skill.category===category.label&&Progression.skillVisible(skill)).map(skill=>{
       const el=document.createElement('article'),description=document.createElement('p'),buy=document.createElement('button');
-      el.className='skill-card';
-      description.textContent=`${skill.name}（${skill.category}・${GemSkills.ranks[skill.rank].label}／${skill.slots}枠）：${skill.effect}`;
+      el.className='skill-card slot-'+this.slotCategory(skill.category);
+      description.className='skill-description';description.textContent=`${skill.icon} ${skill.name}（${skill.category}・${GemSkills.ranks[skill.rank].label}／${skill.slots}枠）：${skill.effect}`;
       const owned=p.unlocked.includes(skill.id);buy.textContent=owned?'購入済み':`${skill.price} GPで購入`;
       buy.disabled=owned||p.balance<skill.price||!PlayerRecords.persisted||!PlayerRecords.writable;
       buy.onclick=()=>{const result=Progression.purchase(skill.id);$('progress-status').textContent=result.message;this.renderRecords();};

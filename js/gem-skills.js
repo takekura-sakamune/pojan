@@ -1,7 +1,12 @@
 'use strict';
 // 「ゲーム性分析と改善案」2026-10-31の27種類改訂版。購入価格は軽100・中200・重300 GP。
+const GEM_SKILL_ICONS={rebirth:'↻',reverse:'⇅',shatter:'◈',luck:'✦',foresight:'◉',convert:'⇄',alchemy:'⚗',favor:'♡',fate:'⌘',shuffle:'⟳',salvage:'↶',charge:'⚡',scavenge:'⤴',keep:'▣',eject:'⇥',exceed:'≫',mulligan:'↺',wild:'★','see-draw':'◌',divination:'⌕',detect:'⊙',discern:'♧',prediction:'⌖',appraisal:'▤',explore:'◍',omniscience:'☼',clairvoyance:'◎'};
 const GemSkills={
   ranks:{light:{label:'軽',slots:1,limit:'1局に1回'},medium:{label:'中',slots:2,limit:'1場に1回'},heavy:{label:'重',slots:3,limit:'1ゲームに1回'}},
+  iconNode(skill,className='skill-icon'){
+    const category={手札:'hand',山札:'stock',情報:'wisdom'}[skill.category];
+    const icon=document.createElement('span');icon.className=className+' skill-icon-'+category;icon.textContent=skill.icon;icon.setAttribute('aria-hidden','true');return icon;
+  },
   entries:[
     ['rebirth','再生','山札','light','手札の1枚を山札に戻し、1枚引き直す'],
     ['reverse','逆転','山札','light','山札の上から2枚を確認し、好きな順番に並び替える'],
@@ -30,5 +35,5 @@ const GemSkills={
     ['explore','探査','情報','medium','自身のテンパイ時、当たり札が山札・相手の手札・捨て札にそれぞれ何枚あるかを確認する'],
     ['omniscience','全知','情報','heavy','山札が全て公開状態になる。使用した局の終了まで継続'],
     ['clairvoyance','千里眼','情報','heavy','対戦者全員の手札がすべて公開状態になる。使用した局の終了まで継続']
-  ].map(([id,name,category,rank,effect])=>({id,name,category,rank,effect,slots:{light:1,medium:2,heavy:3}[rank],price:{light:100,medium:200,heavy:300}[rank]}))
+  ].map(([id,name,category,rank,effect])=>({id,name,category,rank,effect,icon:GEM_SKILL_ICONS[id],slots:{light:1,medium:2,heavy:3}[rank],price:{light:100,medium:200,heavy:300}[rank]}))
 };

@@ -115,7 +115,13 @@ const GemSkillEngine={
     root.hidden=!s.skills.length;root.onkeydown=event=>{if(event.key==='Escape'&&this.canCancel()){event.preventDefault();this.cancel();}};const nodes=[];
     const text=t=>{const p=document.createElement('p');p.textContent=t;nodes.push(p);};
     text('装備GS：'+s.skills.map(id=>GemSkills.entries.find(k=>k.id===id).name).join(' ／ '));
-    const button=(label,run,disabled=false)=>{const b=document.createElement('button');b.textContent=label;b.disabled=disabled;b.onclick=run;nodes.push(b);};
+    for(const id of s.skills){
+      const skill=GemSkills.entries.find(k=>k.id===id),details=document.createElement('details'),summary=document.createElement('summary'),effect=document.createElement('p');
+      details.className='gs-effect-details';summary.append(GemSkills.iconNode(skill),document.createTextNode(skill.name+'の効果'));
+      effect.textContent=skill.effect+'（使用回数：'+GemSkills.ranks[skill.rank].limit+'）';
+      details.append(summary,effect);nodes.push(details);
+    }
+    const button=(label,run,disabled=false,skill=null)=>{const b=document.createElement('button');if(skill){b.className='gs-skill-use';b.append(GemSkills.iconNode(skill),document.createTextNode(label));}else b.textContent=label;b.disabled=disabled;b.onclick=run;nodes.push(b);};
     if(s.gsChoice){
       text(s.gsChoice.text);const options=document.createElement('div');options.className='gs-options';
       // 表示順だけを整列し、選択処理には元の選択肢番号を渡す。
@@ -130,7 +136,7 @@ const GemSkillEngine={
         else {const b=document.createElement('button');b.textContent=o.label;b.onclick=()=>this.choose(i);options.append(b);}
       });nodes.push(options);
     }
-    else for(const id of s.skills){const k=GemSkills.entries.find(k=>k.id===id);button(k.name+'を使う',()=>this.activate(id),!this.available(id));}
+    else for(const id of s.skills){const k=GemSkills.entries.find(k=>k.id===id);button(k.name+'を使う',()=>this.activate(id),!this.available(id),k);}
     if(this.canCancel()){const cancel=document.createElement('button');cancel.className='gs-cancel';cancel.textContent='GS使用をキャンセル';cancel.onclick=()=>this.cancel();nodes.push(cancel);}
     if(s.gsKeep){const keep=UIManager.card(s.gsKeep);keep.setAttribute('data-gs-zone','keep');nodes.push(keep);text('保管：'+this.label(s.gsKeep));button('保管カードと交換',()=>this.exchangeKeep(),s.phase!=='draw'||s.currentPlayerIndex!==0||s.players[0].riichi||Boolean(s.gsChoice)||s.gsCharge||s.drawCount<=s.gsKeepTurn);}
     for(const info of s.gsInfo)text(info);

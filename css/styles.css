@@ -1003,6 +1003,12 @@ button.danger-button:hover { background: #6b3535; }
 
 .owned-skill-list, .equipment-replace-options { display: flex; gap: 8px; flex-wrap: wrap; margin-block: 14px; }
 .owned-skill { font-size: 13px; border-color: var(--slot-color); }
+.skill-icon { display: inline-grid; width: 1.55em; height: 1.55em; margin-inline-end: .35em; place-items: center; vertical-align: -.12em; border: 1px solid currentColor; border-radius: 5px; font-size: .95em; font-weight: 800; line-height: 1; }
+.skill-icon-hand { color: #ffbd83; background: #57351f; }
+.skill-icon-stock { color: #9beaff; background: #214b59; }
+.skill-icon-wisdom { color: #d4b9f7; background: #403254; }
+.gs-effect-details .skill-icon { margin-inline-end: .45em; }
+.skill-description::first-letter { color: var(--slot-color); font-weight: 800; }
 .owned-skill[aria-pressed="true"] { background: var(--slot-fill); color: var(--slot-color); box-shadow: inset 0 0 0 1px var(--slot-color); }
 .equipment-replace-options button[aria-pressed="true"] { border-color: #dec18a; background: #51452b; }
 button.equipment-slot-group { font: inherit; cursor: pointer; color: #f1eee2; }
