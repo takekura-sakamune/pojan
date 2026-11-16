@@ -103,7 +103,7 @@ const SoundManager= {
       if(event==='dealSequence'){
         if(options.includeStart)notes([262,392,523],.1,.3);
         const count=Math.max(0,Number(options.count)||0),interval=Math.max(.04,Number(options.interval)||.07);
-        for(let i=0;i<count;i++)this.paper(t+i*interval,.095,.2);
+        for(let i=0;i<count;i++)this.paper(t+i*interval,.19,.2);
       }
       else if(event==='draw'||event==='deal')this.paper(t,.14,.22);
       else if(event==='discard')this.paper(t,.16,.18);
