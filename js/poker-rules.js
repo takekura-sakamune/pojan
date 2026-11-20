@@ -248,7 +248,14 @@ UIManager.render=function(){
   $('info').children[2].textContent=`ポット：${s.pot||0}点`;$('info').children[3].textContent=`交換：${Math.max(...s.players.map(p=>p.exchangeCount||0))}/${s.maxTurns}`;$('center-cards').hidden=true;
   $('turn').textContent=s.phase==='ended'?'ショーダウン結果':s.phase==='betting'?'ベット判断':`${s.players[s.currentPlayerIndex].name}の交換 · 第${s.turnNumber}巡`;
   $('playerTitle').textContent=`${s.players[0].name}　${s.players[0].score}点${s.players[0].folded?'【フォールド】':s.players[0].stopped?'【ストップ】':''}${s.players[0].allIn?'【オールイン】':''}`;
-  for(let i=1;i<s.playerCount;i++){const p=s.players[i];UIManager.npcElement('npcTitle',i).textContent=`${p.name}　${p.score}点${i===s.dealerIndex?'（親）':''}${p.folded?'【フォールド】':p.stopped?'【ストップ】':''}${p.allIn?'【オールイン】':''}`;}
+  for(let i=1;i<s.playerCount;i++){
+    const p=s.players[i],seat=UIManager.seatFor(i,s.playerCount),sideSeat=seat==='west'||seat==='east';
+    const title=UIManager.npcElement('npcTitle',i),score=UIManager.npcElement('npcScore',i);
+    title.textContent=`${p.name}${sideSeat?'':`　${p.score}点${i===s.dealerIndex?'（親）':''}`}${p.folded?'【フォールド】':p.stopped?'【ストップ】':''}${p.allIn?'【オールイン】':''}`;
+    score.hidden=!sideSeat;
+    score.textContent=`${p.score}点`;
+    if(i===s.dealerIndex)score.textContent+='（親）';
+  }
   const mine=s.currentPlayerIndex===0,p=s.players[0];
   if(s.phase==='draw'&&mine&&!p.stopped)buttons.push(['ドロー',true,()=>ExchangeManager.draw()]);
   if(s.phase==='discard'&&mine&&!p.stopped){

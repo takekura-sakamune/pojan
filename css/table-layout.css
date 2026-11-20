@@ -138,11 +138,13 @@
 #table.players-3 #npc-area-2 { grid-area: east; }
 /* 4人対戦の正面席はプレイヤー席と同じ行幅・中央位置に揃える。 */
 #table.players-4 {
+  grid-template-columns: minmax(180px, 1fr) minmax(290px, 1.6fr) minmax(180px, 1fr);
   grid-template-areas:
-    "north north north"
+    ". north ."
     "west center east"
-    "south south south"
-    "skills skills skills";
+    ". south ."
+    ". skills .";
+  min-width: 680px;
 }
 #table.players-4 #npc-area-2 {
   justify-self: center;
@@ -342,8 +344,12 @@
 #gs-game .gs-options .card:focus-visible { outline: 3px solid #80d8cf; }
 #gs-game .gs-cancel { display: block; margin-block: 10px; }
 
-/* 4人卓の正面・中央・プレイヤー・GSを同じ列幅に揃える。 */
-#table.players-4 { grid-template-areas: ". north ." "west center east" ". south ." ". skills ."; }
+/* 4人卓のPC表示は、正面席・プレイヤー席・GSを中央列に置く。 */
+#table.players-4 {
+  grid-template-columns: minmax(180px, 1fr) minmax(290px, 1.6fr) minmax(180px, 1fr);
+  grid-template-areas: ". north ." "west center east" ". south ." ". skills .";
+  min-width: 680px;
+}
 #table.players-4 #player-area, #table.players-4 #gs-game { width: 100%; justify-self: stretch; }
 #table.players-4 #player-area { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 #table.players-4 #player-area #actions { padding-left: 0; border-left: 0; justify-content: center; }
@@ -359,7 +365,7 @@
   #table.players-4 #playerHand .card { width: 46px; height: 64px; --number-size: 17px; --suit-size: 12px; }
 }
 
-/* 中央列の行位置は保持し、左右席だけ内容に合わせて下へ伸ばす。 */
+/* 結果表示でも4人卓の列・段を保持する。 */
 #table.players-4.side-result-locked .npc-area,
 #table.players-4.side-result-locked #player-area {
   min-height: 0;
@@ -367,9 +373,75 @@
   overflow: visible;
 }
 #table.players-4.side-result-locked .npc-area:is(.seat-west, .seat-east) {
-  align-self: start;
-  height: max-content;
-  position: relative;
+  align-self: stretch;
+  height: auto;
+  position: static;
+}
+
+#table .npc-area:is(.seat-west, .seat-east) .npc-score {
+  display: inline-block;
+  margin: 0 0 6px 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+#table .npc-area:is(.seat-west, .seat-east) h2 { display: inline-block; vertical-align: baseline; }
+#table .npc-area:is(.seat-west, .seat-east) .npc-score[hidden] { display: none; }
+
+/* スマートフォンでは左右席を縦積みにし、名前と点数を別行で表示する。 */
+@media (max-width: 720px) {
+  #table .npc-area:is(.seat-west, .seat-east) {
+    width: min(100%, 120px);
+    box-sizing: border-box;
+    justify-self: center;
+  }
+  #table.players-4 {
+    grid-template-areas: ". north ." "west center east" "west south east" ". skills .";
+  }
+  #table.players-4 .npc-area:is(.seat-west, .seat-east) {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    align-self: stretch;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    position: static;
+  }
+  #table.players-4 .npc-area:is(.seat-west, .seat-east) [id^="npc-portrait"] {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    justify-content: center;
+    border-left: 0;
+    padding: 0;
+  }
+  #table.players-4 .npc-area:is(.seat-west, .seat-east) [id^="npc-content"] { grid-column: 1; grid-row: 2; }
+  #table.players-4 .npc-area:is(.seat-west, .seat-east) [id^="npc-face"] {
+    width: min(100%, 84px);
+    height: 84px;
+    aspect-ratio: auto;
+    object-fit: contain;
+  }
+  #table .npc-area:is(.seat-west, .seat-east) h2,
+  #table .npc-area:is(.seat-west, .seat-east) .npc-score {
+    display: block;
+    margin: 0 0 6px;
+  }
+  #table .npc-area:is(.seat-west, .seat-east) .npc-score[hidden] { display: none; }
+  #table .npc-area:is(.seat-west, .seat-east) [id^="npc-dialogue"] {
+    width: fit-content;
+    max-width: 84px;
+    margin-inline: auto;
+  }
+  #table .npc-area:is(.seat-west, .seat-east) h2,
+  #table .npc-area:is(.seat-west, .seat-east) [id^="npc-dialogue"],
+  #table .npc-area:is(.seat-west, .seat-east) [id^="npc-dialogue"] * {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
 }
 
 /* 操作は手札の右に置き、次局ボタンもプレイヤー枠の高さに含める。 */

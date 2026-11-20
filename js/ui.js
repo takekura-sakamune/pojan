@@ -421,8 +421,12 @@ const UIManager= {
       if(index>=s.playerCount)continue;
       const p=s.players[index];
       area.className='npc-area seat-'+this.seatFor(index,s.playerCount)+(s.currentPlayerIndex===index&&s.phase!=='ended'?' current-npc':'');
-      this.npcElement('npcTitle',index).textContent=`${p.name}　${p.score}点${index===s.dealerIndex?'（親）':''}`;
-      if(p.riichi)this.npcElement('npcTitle',index).textContent+='【リーチ】';
+      const title=this.npcElement('npcTitle',index),score=this.npcElement('npcScore',index);
+      const sideSeat=['west','east'].includes(this.seatFor(index,s.playerCount));
+      title.textContent=sideSeat?p.name:`${p.name}　${p.score}点${index===s.dealerIndex?'（親）':''}`;
+      if(p.riichi)title.textContent+='【リーチ】';
+      score.hidden=!sideSeat;
+      score.textContent=`${p.score}点${index===s.dealerIndex?'（親）':''}`;
       this.npcElement('npc-face',index).src=NPC_FACE_IMAGES[p.npcId];
       this.npcElement('npc-face',index).alt=p.name;
       this.npcElement('npc-dialogue',index).replaceChildren(...p.npcLines.map(text=> {

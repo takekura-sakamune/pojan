@@ -64,12 +64,20 @@ const SoundManager= {
       if(this.primedContext!==ctx&&typeof ctx.createBufferSource==='function') {
         const source=ctx.createBufferSource();
         source.buffer=ctx.createBuffer(1,1,ctx.sampleRate);
-        source.connect(this.master);
+        source.connect(ctx.destination);
         source.onended=()=>source.disconnect();
         source.start(0);
+        // Some mobile browsers need a non-zero output node in the initiating gesture.
+        try {
+          const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+          oscillator.frequency.value=440;gain.gain.value=.0001;
+          oscillator.connect(gain);gain.connect(ctx.destination);
+          oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
+          oscillator.start(0);oscillator.stop(.025);
+        } catch(_) {}
         this.primedContext=ctx;
       }
-      if(ctx.state==='suspended'||ctx.state==='interrupted') {
+      if(ctx.state!=='running') {
         return ctx.resume().then(()=>this.flush(ctx)).catch(()=>{});
       }
       this.flush(ctx);
@@ -82,7 +90,7 @@ const SoundManager= {
     if(ctx!==this.context||ctx.state!=='running')return;
     const pending=this.pending;
     this.pending=null;
-    if(pending&&pending.context===ctx&&Date.now()-pending.at<1000)this.play(pending.event,pending.options);
+      if(pending&&pending.context===ctx&&Date.now()-pending.at<3000)this.play(pending.event,pending.options);
   },
   update() {
     if(this.master)this.master.gain.setTargetAtTime(this.enabled?this.volume:0, this.context.currentTime, 0.015);
