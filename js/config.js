@@ -6,6 +6,8 @@ const CONFIG= {
   initialScoreByPlayerCount:{2:25000,3:25000,4:25000},
   maxTurns:8,
   maxTurnsByPlayerCount:{2:8, 3:5, 4:4},
+  openingBet:1000,
+  raiseStep:1000,
   suits:['diamond', 'heart', 'spade', 'club']
 };
 const SUITS= {
@@ -15,21 +17,19 @@ const SUITS= {
   club:['♣', 'エメラルド']
 };
 const ROLE_NAMES= {
-  trigon:'トライゴン',
   pairshape:'ペアシェイプ',
   trilliant:'トリリアント',
   catseye:'キャッツアイ',
-  asterism:'アステリズム',
+  trigon:'トライゴン',
   colorless:'カラーレス',
   flawless:'フローレス',
   fordite:'フォーダイト',
-  brilliant:'ブリリアント',
+  asterism:'アステリズム',
   fourC:'4C',
-  paragon:'パラゴン'
+  brilliant:'ブリリアント'
 };
-const ROLE_RULES=['絵札3枚以上', '2ペア＋絵札', '3カード＋絵札', 'ペア＋別の3枚で連番', '3カード＋ペア', '5枚の連番', '同スート5枚', '1・9・絵札のみ', '同スートで5枚の連番', '同じ数字4枚', '他の役を伴う初回ツモ'];
-// ブリリアントはフローレス＋カラーレスの合計を、1つの名前で表示する。
-const ROLE_VALUES={trigon:1,pairshape:1,trilliant:1,catseye:1,asterism:1,colorless:1,flawless:1,fordite:1,brilliant:2,fourC:2,paragon:1};
+const ROLE_RULES=['2ペア＋絵札', '3カード＋絵札', 'ペア＋連続する数字3枚', '絵札3枚以上', '5枚の連番', '同スート5枚', '1・9・絵札のみ', '3カード＋ペア', '同じ数字4枚', '同スートで5枚の連番'];
+const ROLE_VALUES={pairshape:1,trilliant:2,catseye:3,trigon:4,colorless:5,flawless:6,fordite:7,asterism:8,fourC:9,brilliant:10};
 const ROUND_NAMES=['スペースオブダイアモンド', 'スペースオブルビー', 'スペースオブサファイア', 'スペースオブエメラルド'];
 function roundName(round) {
   return ROUND_NAMES[(round-1)%ROUND_NAMES.length];

@@ -29,10 +29,10 @@ const PlayerRecords = {
       const player=i=>Number.isInteger(i)&&i>=0&&i<count;
       if(!Array.isArray(record.hands)||new Set(record.hands.map(h=>h&&h.id)).size!==record.hands.length||
         !record.hands.every(h=>h&&typeof h.id==='string'&&Number.isInteger(h.round)&&h.round>=1&&h.round<=4&&
-          Number.isInteger(h.hand)&&h.hand>=1&&h.hand<=count&&player(h.dealer)&&['draw','tsumo','ron'].includes(h.type)&&
+          Number.isInteger(h.hand)&&h.hand>=1&&h.hand<=count&&player(h.dealer)&&['draw','tsumo','ron','showdown'].includes(h.type)&&
           (h.type==='draw'?h.winner===null:player(h.winner))&&
           (h.type==='ron'?player(h.loser)&&h.loser!==h.winner:h.loser===null)&&
-          Array.isArray(h.roles)&&h.roles.every(id=>Object.hasOwn(ROLE_NAMES,id))&&
+          Array.isArray(h.roles)&&h.roles.every(id=>Object.hasOwn(ROLE_NAMES,id)||id==='paragon')&&
           Array.isArray(h.riichi)&&h.riichi.length===count&&h.riichi.every(v=>typeof v==='boolean')&&
           Array.isArray(h.transfers)&&h.transfers.every(t=>t&&player(t.from)&&player(t.to)&&t.from!==t.to&&Number.isInteger(t.amount)&&t.amount>0)))return false;
     }

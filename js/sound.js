@@ -110,6 +110,7 @@ const SoundManager= {
       else if(event==='select')this.tone(920,t,.035,'sine',.05,1100);
       else if(event==='tsumo')notes([523,659,784,1046],.13,.55);
       else if(event==='ron')notes([880,1175],.07,.22);
+      else if(event==='win')notes([523,659,784,1046],.13,.55);
       else if(event==='drawEnd')notes([392,523,392],.14,.4);
       else if(event==='start')notes([262,392,523],.1,.3);
     }

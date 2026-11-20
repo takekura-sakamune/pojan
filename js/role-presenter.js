@@ -30,7 +30,6 @@ const RolePresenter= {
         flawless:'同じスート',
         fordite:'1・9・絵札',
         brilliant:'同スートの連番',
-        paragon:'初回ツモ'
       }
       [role]||'', cards)];
     }

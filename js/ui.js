@@ -313,7 +313,7 @@ const UIManager= {
     panel.replaceChildren();
     hand.className='row'+(won?' winning-hand':'');
     const cards=won?r.cards:s.players[idx].hand;
-    const role=won?(s.activeRole||r.roles.find(role=>role!=='paragon')):null;
+    const role=won?(s.activeRole||r.strength):null;
     const groups=won?RolePresenter.groups(cards, role):[];
     const display=idx===0||won?HandSorter.sorted(cards, s):cards;
     for(const c of display) {
@@ -359,7 +359,7 @@ const UIManager= {
     for(const id of r.roles) {
       const b=document.createElement('button');
       b.textContent=ROLE_NAMES[id];
-      const description=ROLE_RULES[Object.keys(ROLE_NAMES).indexOf(id)]+` ／ ${ROLE_VALUES[id]*1000}点`+(id==='brilliant'?'（フローレス＋カラーレス）':'');
+      const description=ROLE_RULES[Object.keys(ROLE_NAMES).indexOf(id)]+` ／ 強さ ${ROLE_VALUES[id]}`;
       b.setAttribute('title',description);
       b.setAttribute('aria-description',description);
       b.setAttribute('aria-pressed', String(id===role));
@@ -378,7 +378,6 @@ const UIManager= {
       label.textContent=`${g.label}：${cards.filter(c=>g.ids.includes(c.id)).map(c=>SUITS[CardManager.suit(c,s)][0]+c.number).join('・')}`;
       legend.append(label);
     });
-    if(role==='paragon')legend.append(document.createTextNode('（他の成立役は役名を選んで確認できます）'));
     panel.append(legend);
     const points=document.createElement('div');
     points.textContent=r.transfers.map(t=>`${s.players[t.from].name} → ${s.players[t.to].name} ${t.amount}点`).join('、');

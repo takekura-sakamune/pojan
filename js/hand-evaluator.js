@@ -1,13 +1,11 @@
 'use strict';
-// 5枚の手札の役と倍率の判定
+// 5枚の手札の役と強さの判定
 const HandEvaluator= {
   evaluate(cards, context) {
     const no= {
       isWinning:false,
       roles:[],
-      hasDora:false,
-      multiplier:0,
-      paragonType:null
+      hasDora:false, multiplier:0, paragonType:null, rank:0, maxNumber:0, maxSuit:0
     };
     if(cards.length!==5)return no;
     const counts= {};
@@ -21,7 +19,6 @@ const HandEvaluator= {
     const add=(id, ok)=> {
       if(ok)roles.push(id);
     };
-    add('trigon', faces>=3);
     add('pairshape', freq.filter(n=>n===2).length===2&&faces===1);
     add('trilliant', freq.includes(3)&&faces>=1);
     let cat=false;
@@ -32,28 +29,20 @@ const HandEvaluator= {
       if(r.length===3&&r[1]===r[0]+1&&r[2]===r[1]+1)cat=true;
     }
     add('catseye', cat);
-    add('asterism', freq.includes(3)&&freq.includes(2));
+    add('trigon', faces>=3);
     add('colorless', straight&&!flush);
     add('flawless', flush&&!straight);
     add('fordite', cards.every(c=>c.number===1||c.number===9||c.isFaceCard));
-    add('brilliant', straight&&flush);
+    add('asterism', freq.includes(3)&&freq.includes(2));
     add('fourC', freq.includes(4));
+    add('brilliant', straight&&flush);
     if(!roles.length)return no;
-    const paragon=context.isFirstDraw&&context.winType==='tsumo';
-    add('paragon', paragon);
-    const hasDora=cards.some(c=>c.number===context.doraNumber);
-    const roleUnits=roles.reduce((sum,id)=>sum+ROLE_VALUES[id],0);
-    const hasRiichi=Boolean(context.riichi);
-    const multiplier=roleUnits+(hasDora?1:0)+(hasRiichi?1:0);
+    const strength=roles.slice().sort((a,b)=>ROLE_VALUES[b]-ROLE_VALUES[a])[0];
+    const maxNumber=Math.max(...cards.map(c=>c.number));
+    const maxSuit=Math.max(...cards.filter(c=>c.number===maxNumber).map(c=>CONFIG.suits.length-CONFIG.suits.indexOf(CardManager.suit(c,context))));
     return {
-      isWinning:true,
-      roles,
-      hasDora,
-      hasRiichi,
-      multiplier,
-      roleUnits,
-      basePoints:multiplier*1000,
-      paragonType:paragon?(context.isDealer?'tenhou':'chihou'):null
+      isWinning:true, roles, strength, rank:ROLE_VALUES[strength], maxNumber, maxSuit,
+      hasDora:cards.some(c=>c.number===context.doraNumber), multiplier:ROLE_VALUES[strength], roleUnits:ROLE_VALUES[strength], basePoints:0, hasRiichi:false, paragonType:null
     };
   }
 };

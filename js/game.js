@@ -7,7 +7,7 @@ const GameManager= {
     const opponents=[npc, ...DeckManager.shuffle(NPCPool.entries.filter(p=>p.id!==npc.id))].slice(0, playerCount-1);
     const initialScore=CONFIG.initialScoreByPlayerCount[playerCount];
     gameState={
-      gsActivations:[], gsUsed:{}, peakScore:initialScore, hands:[], ruleVersion:1, skills:[...PlayerRecords.progress.equipped], history:[], gameOver:false, npcId:npc.id, playerCount, difficulty:difficulty==='easy'?'easy':'normal', matchId:PlayerRecords.newId(),
+      gsActivations:[], gsUsed:{}, peakScore:initialScore, hands:[], ruleVersion:2, skills:[...PlayerRecords.progress.equipped], history:[], gameOver:false, npcId:npc.id, playerCount, difficulty:difficulty==='easy'?'easy':'normal', matchId:PlayerRecords.newId(),
       roundNumber:round, handNumber:1, turnNumber:1,
       currentSuit:CONFIG.suits[(round-1)%4], dealerIndex:0, currentPlayerIndex:0,
       maxTurns:CONFIG.maxTurnsByPlayerCount[playerCount],

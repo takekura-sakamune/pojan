@@ -20,7 +20,7 @@ const PlayerStats={
       if(Array.isArray(r.hands)&&r.hands.length)stats.recordedMatches++;
       for(const h of r.hands||[]){
         stats.hands++;
-        if(h.winner===0){stats.wins++;stats[h.type]++;for(const role of h.roles)stats.roles[role]=(stats.roles[role]||0)+1;}
+        if((Array.isArray(h.winners)?h.winners.includes(0):h.winner===0)){stats.wins++;if(h.type==='tsumo'||h.type==='ron')stats[h.type]++;for(const role of h.roles)if(role!=='paragon')stats.roles[role]=(stats.roles[role]||0)+1;}
         if(h.type==='ron'&&h.loser===0)stats.dealIns++;
       }
     }
@@ -33,6 +33,7 @@ const Progression={
   empty(){return {balance:100,transactions:[{id:"initial-gp",amount:100,label:"初期GP"}],unlocked:[],equipped:[],achievements:{}};},
   capacity(p=PlayerRecords.progress){return p?.achievements?.['hard-all']?4:3;},
   achievementDefinitions:[
+    {id:'tutorial-viewed',name:'宝雀チュートリアル読了',description:'チュートリアルの全項目を見る',reward:100,target:1},
     {id:'matches-1',name:'はじめの一戦',reward:100,target:1},
     {id:'matches-10',name:'十戦の歩み',reward:300,target:10},
     {id:'matches-100',name:'百戦の歩み',reward:500,target:100},
@@ -50,6 +51,7 @@ const Progression={
     })))
   ],
   achievementProgress(definition,records,progress=PlayerRecords.progress){
+    if(definition.id==='tutorial-viewed')return {value:progress.achievements?.[definition.id]?1:0,target:1};
     if(definition.target)return {value:new Set(records.map(r=>r.id)).size,target:definition.target};
     if(definition.collection){
       const skills=GemSkills.entries.filter(skill=>skill.category===definition.collection.category&&skill.rank===definition.collection.rank);

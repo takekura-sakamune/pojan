@@ -46,7 +46,7 @@
             <img id="npc-preview-image" alt="" draggable="false" hidden>
             <figcaption id="npc-preview-name" aria-live="polite">ランダム</figcaption>
           </figure>
-          <button id="start-game" type="button">対戦を始める</button>
+            <button id="start-game" type="button">対戦を始める</button>
           </div>
         </div>
         <section id="progress-panel" aria-label="プレイヤーメニュー">
@@ -67,7 +67,10 @@
           </nav>
         </section>
         <div class="reset-data-controls">
-          <button id="reset-data" class="danger-button" type="button">データを削除してはじめから</button>
+          <div id="reset-action-row" class="reset-action-row">
+            <button id="reset-data" class="danger-button" type="button">データを削除してはじめから</button>
+            <button id="open-tutorial" type="button" aria-haspopup="dialog" aria-controls="tutorial-dialog">チュートリアル</button>
+          </div>
           <p id="reset-status" role="status" aria-live="polite"></p>
         </div>
       </section>
@@ -212,6 +215,7 @@
       </div>
       <div id="player-audio">
         <div id="sound-controls" aria-label="効果音設定">
+          <button id="open-tutorial-game" type="button" aria-haspopup="dialog" aria-controls="tutorial-dialog">チュートリアル</button>
           <button id="sound-toggle" type="button" aria-pressed="true">SE：ON</button>
           <label for="sound-volume">音量</label>
           <input id="sound-volume" type="range" min="0" max="100" value="75" aria-label="SE音量">
@@ -219,10 +223,9 @@
       </div>
       <details>
         <summary>役と遊び方</summary>
-        <p>ツモして5枚から役を作ります。カードを選び「打牌確定」、または同じカードをダブルタップして捨てます。相手の捨て札で完成すればロンできます。人数分の局が終わると次の場へ進みます。全員25000点で開始し、場をまたいでも持ち点をリセットしません。第四場終了、または誰かの持ち点が0点以下になると対戦終了です。0点ちょうどでも終了します。</p>
-        <p>2人：8巡・2局／3人：5巡・3局／4人：4巡・4局。ツモは他の全員から、ロンは放銃者から得点を受け取ります。複数のロン候補は放銃者から手番順に優先し、見送り時は次の候補へ進みます。</p>
-      <p>リーチは5枚から捨てるカードを選んで「リーチ（選択牌を捨てる）」で宣言します。選択したカードを捨てると役のアガリ待ちになる場合だけボタンが表示されます。宣言料はありません。リーチ中は自分の待ち牌（スートと数字）を表示します。その後は残り4枚を固定し、自動でツモ・ツモ切りを進めます。ツモアガリ・ロンが可能な時だけ自動進行を停止します。アガリを見送ると自動進行を再開します。固定は次局で解除されます。</p><table id="rules"></table>
-        <p>成立した全役を加算します。通常役・パラゴンは1000点、4Cは2000点。フローレス＋カラーレスはブリリアントという名前で2000点とし、元の2役は重ねて加算しません。ドラを含む場合は1000点、リーチを宣言していれば1000点を役の合計に加えます。ドラ・リーチだけではアガれません。特別な三倍役はありません。ツモは他の全員から基本点を、ロンは放銃者から基本点を受け取ります。ドラ・リーチの加点後、親が受け取る・支払う分を1.5倍にします。パラゴンは各自の初回ツモに他の役が成立した場合のみ加算します。</p>
+        <p>全員4枚で開始します。交換手番ごとに1枚引いて1枚捨てるか、役ができた手札でストップできます。最終巡はカードを引くと自動でストップします。規定交換数は巡数と同じです。ストップ後も手番ごとに1枚引き、そのカードを捨てます。相手の捨て札で役ができる場合はロンでき、捨て札を手札に加えてストップします。全員ストップ、または規定交換数の終了後にベットへ進みます。</p>
+        <p>2人：8巡・2局／3人：5巡・3局／4人：4巡・4局。チェック、1000点ベット、1000点刻みのレイズ、コール、フォールド、オールインでベットします。オールイン後、未対応者はコールかフォールドを選びます。ベット終了後は役の強さ、手札の最大数字、スートでショーダウンし、ポットを分配します。同順位のポットは均等分配し、端数は手番順です。</p><table id="rules"></table>
+        <p>役の強さはペアシェイプ＜トリリアント＜キャッツアイ＜トライゴン＜カラーレス＜フローレス＜フォーダイト＜アステリズム＜4C＜ブリリアントです。同じ役なら手札の最大数字、次にその数字のスート（ダイア＞ルビー＞サファイア＞エメラルド）で比較します。全員フォールド時はポットを分配せず、次局に持ち越します。パラゴン、ドラ、リーチはありません。</p>
       </details>
       <details>
         <summary>対局履歴</summary>
@@ -262,6 +265,30 @@
         <button id="return-start" type="button">開始画面へ</button>
       </section>
     </main>
+    <dialog id="tutorial-dialog" aria-labelledby="tutorial-title" aria-describedby="tutorial-progress">
+      <header class="tutorial-header">
+        <div><p id="tutorial-progress" class="tutorial-progress" aria-live="polite"></p><h2 id="tutorial-title">チュートリアルリプレイ</h2></div>
+      </header>
+      <section class="tutorial-replay" aria-label="固定カードによる対局リプレイ">
+        <p id="tutorial-scene-label" class="tutorial-scene-label"></p>
+        <div class="tutorial-seat"><h3>相手</h3><div id="tutorial-opponent-hand" class="tutorial-card-row"></div><p id="tutorial-opponent-note"></p><div class="tutorial-discard-area"><span id="tutorial-discard-label">捨て札</span><div id="tutorial-discard" class="tutorial-card-row" aria-label="捨て札"></div></div></div>
+        <div class="tutorial-pot" id="tutorial-pot"></div>
+        <p id="tutorial-deck-note" class="tutorial-deck-note"></p>
+        <div class="tutorial-seat tutorial-you"><h3>あなた</h3><div id="tutorial-player-hand" class="tutorial-card-row"></div><p id="tutorial-hand-note"></p></div>
+      </section>
+      <section class="tutorial-popup" aria-live="polite" aria-atomic="true">
+        <div class="tutorial-popup-head"><h3 id="tutorial-popup-title"></h3><button id="tutorial-next" type="button">次へ</button></div>
+        <p id="tutorial-popup-message"></p>
+      </section>
+      <section id="tutorial-role-guide" class="tutorial-role-guide" hidden aria-label="役の種類・説明・実例">
+        <h3>役の種類・成立条件・実例</h3>
+        <p class="tutorial-face-rule">絵札（10～13）は、局ごとに決まる1種類のスートとして扱います。同じ局では4枚の絵札がすべてそのスートです。スートは次の局で切り替わります。</p>
+        <p class="tutorial-face-rule"><strong>ペアシェイプとトリリアントには絵札が必要です。</strong>2ペアだけ、または絵札のない3カードだけでは、この2つの役になりません。</p>
+        <p class="tutorial-face-rule">例の絵札は、絵札のスートがダイアになる局を想定しています。</p>
+        <ol id="tutorial-role-examples" class="tutorial-role-examples"></ol>
+      </section>
+      <footer class="tutorial-footer"><button id="close-tutorial" type="button">リプレイを終了</button></footer>
+    </dialog>
     <dialog id="shop-help-dialog" aria-labelledby="shop-help-title">
       <header class="shop-help-header"><h2 id="shop-help-title">GPの獲得方法</h2><button id="close-shop-help" type="button" autofocus>閉じる</button></header>
       <p>新規開始・データ初期化時の所持GPは100です。</p>
@@ -282,6 +309,7 @@
       <p>2人対戦は単独1位のみ対象です。3・4人対戦で同順位になった場合は、その順位の報酬を獲得します。</p>
       <h3>実績・初勝利ボーナス</h3>
       <ul>
+        <li>チュートリアルの全項目を見る：100 GP</li>
         <li>各NPCへの初単独勝利：300 GP（2人対戦・難易度共通）</li>
         <li>対戦を1回完了：100 GP／10回完了：300 GP／100回完了：500 GP（勝敗不問）</li>
         <li>本気モードで各NPCに初単独勝利：それぞれ500 GP</li>
@@ -313,7 +341,9 @@
     <script defer src="js/gem-skill-engine.js"></script>
     <script defer src="js/role-presenter.js"></script>
     <script defer src="js/ui.js"></script>
+    <script defer src="js/poker-rules.js"></script>
     <script defer src="js/match-ui.js"></script>
+    <script defer src="js/tutorial.js"></script>
     <script defer src="js/app.js"></script>
   </body>
 </html>

@@ -248,6 +248,7 @@
 #start-setup #npc-options .npc-choice-name { max-width: none; font-size: 12px; line-height: 1.5; }
 #npc-preview-column { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 #npc-preview-column #start-game { width: 100%; margin: 0; padding: 11px 6px; font-size: 13px; }
+#npc-preview-column #open-tutorial { width: 100%; margin: 0; padding: 11px 6px; font-size: 13px; }
 #npc-preview { display: grid; grid-template-rows: minmax(0, 1fr) auto; position: relative; min-width: 0; height: 480px; min-height: 525px; margin: 0; padding: 10px; border: 1px solid #496360; border-radius: 10px; background: radial-gradient(ellipse at 50% 70%, #3b514a, #14262b 78%); }
 #npc-preview-image { width: 100%; height: 100%; min-height: 0; object-fit: contain; align-self: center; }
 #npc-preview-placeholder { display: grid; place-items: center; height: 100%; min-height: 0; color: #d9bb7c; font-size: 100px; font-weight: bold; }
