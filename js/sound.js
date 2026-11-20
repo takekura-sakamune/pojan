@@ -7,6 +7,7 @@ const SoundManager= {
   volume:0.75,
   pending:null,
   primedContext:null,
+  recreateOnGesture:false,
   paperBuffer:null,
   tone(frequency,time,duration,type='sine',volume=0.24,slide=null) {
     const ctx=this.context;
@@ -49,6 +50,14 @@ const SoundManager= {
   unlock() {
     if(typeof window==='undefined')return;
     try {
+      if(this.recreateOnGesture){
+        const previous=this.context;
+        this.context=null;this.master=null;this.primedContext=null;this.pending=null;
+        this.recreateOnGesture=false;
+        if(previous&&previous.state!=='closed'){
+          try{const closing=previous.close();if(closing?.catch)closing.catch(()=>{});}catch(_){}
+        }
+      }
       const Audio=window.AudioContext||window.webkitAudioContext;
       if(!Audio)return;
       if(!this.context||this.context.state==='closed') {
@@ -142,7 +151,7 @@ const SoundManager= {
     document.addEventListener('click', ()=>this.unlock(), {capture:true});
     document.addEventListener('visibilitychange', ()=> {
       this.pending=null;
-      if(document.visibilityState==='visible'&&this.context)this.unlock();
+      if(document.visibilityState==='hidden')this.recreateOnGesture=true;
     });
     toggle.onclick=()=> {
       this.unlock();
