@@ -1076,7 +1076,7 @@ button.equipment-slot-group:focus-visible { outline: 3px solid #80d8cf; outline-
 #start-screen #nickname-status:empty, #start-screen #start-equipment-status:empty, #start-screen #reset-status:empty { display: none; }
 .shop-header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 #shop-help-dialog { width: min(720px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); box-sizing: border-box; padding: 22px; overflow-y: auto; border: 1px solid #dec18a; border-radius: 14px; background: #14262b; color: #f1eee2; }
-#tutorial-dialog { width: min(760px, calc(100vw - 24px)); max-height: min(820px, calc(100dvh - 32px)); box-sizing: border-box; padding: 22px; overflow-y: auto; border: 1px solid #dec18a; border-radius: 14px; background: #14262b; color: #f1eee2; }
+#tutorial-dialog { width: min(760px, calc(100vw - 24px)); max-height: min(820px, calc(100dvh - 32px)); margin: 12px auto auto; box-sizing: border-box; padding: 22px; overflow-y: auto; border: 1px solid #dec18a; border-radius: 14px; background: #14262b; color: #f1eee2; }
 #tutorial-dialog::backdrop { background: #071418d9; }
 .tutorial-header, .tutorial-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .tutorial-header h2 { margin: 0; color: #dec18a; }
@@ -1111,7 +1111,8 @@ button.equipment-slot-group:focus-visible { outline: 3px solid #80d8cf; outline-
 .tutorial-example-cards .card .face-suit { width: 10px; height: 11px; }
 .tutorial-role-examples li p:last-child { color: #b5c3bc; }
 .tutorial-role-examples li .tutorial-role-warning { color: #ffd28d; font-weight: 700; }
-.tutorial-footer { justify-content: flex-end; margin-top: 14px; }
+.tutorial-role-next-slot { display: flex; justify-content: flex-end; margin-top: 12px; }
+.tutorial-footer { justify-content: flex-start; margin-top: 14px; }
 @media (max-width: 520px) {
   #tutorial-dialog { padding: 16px; }
   .tutorial-replay { gap: 5px; margin: 12px 0; padding: 9px 5px; }

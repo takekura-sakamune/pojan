@@ -30,6 +30,10 @@ const Tutorial={
     const button=document.getElementById('open-tutorial');
     if(PlayerRecords.progress.achievements['tutorial-viewed'])document.getElementById('reset-action-row').append(button);
     else document.getElementById('start-game').parentElement.insertBefore(button,document.getElementById('start-game'));
+    this.updateExitButton();
+  },
+  updateExitButton(){
+    document.getElementById('close-tutorial').hidden=!PlayerRecords.progress.achievements['tutorial-viewed'];
   },
   complete(){
     const id='tutorial-viewed',p=PlayerRecords.progress;
@@ -60,7 +64,6 @@ const Tutorial={
     const roleGuide=document.getElementById('tutorial-role-guide');
     roleGuide.hidden=this.current!==6;
     const dialog=document.getElementById('tutorial-dialog');dialog.scrollTop=0;
-    if(this.current===6)roleGuide.scrollIntoView({block:'nearest'});
     const player=document.getElementById('tutorial-player-hand'),opponent=document.getElementById('tutorial-opponent-hand'),discard=document.getElementById('tutorial-discard');
     player.replaceChildren(...scene.hand.map(id=>this.makeCard(id)));
     opponent.replaceChildren(...Array.from({length:scene.backs},()=>{const back=document.createElement('div');back.className='card back';back.textContent='宝';back.setAttribute('aria-label','相手の手札');return back;}));
@@ -71,6 +74,9 @@ const Tutorial={
     document.getElementById('tutorial-hand-note').textContent=scene.handNote||'';
     document.getElementById('tutorial-opponent-note').textContent=scene.opponentNote||'';
     const next=document.getElementById('tutorial-next');
+    const roleNextSlot=document.getElementById('tutorial-role-next-slot');
+    if(this.current===6)roleNextSlot.append(next);
+    else document.querySelector('.tutorial-popup-head').append(next);
     next.textContent='次へ';next.disabled=this.current===this.scenes.length-1;
     this.visited.add(this.current);this.complete();
   },
@@ -105,7 +111,10 @@ const Tutorial={
       else this.close();
     };
     const dialog=document.getElementById('tutorial-dialog');
-    dialog.oncancel=event=>{event.preventDefault();this.close();};
+    dialog.oncancel=event=>{
+      event.preventDefault();
+      if(PlayerRecords.progress.achievements['tutorial-viewed'])this.close();
+    };
   }
 };
 Tutorial.bind();
